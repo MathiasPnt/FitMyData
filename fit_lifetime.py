@@ -1,15 +1,13 @@
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
 @author: Mathias Pont
-
 """
 import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
 import scipy
 import streamlit as st
-import os
-import webbrowser
 from lmfit import Model
 
 @st.cache(show_spinner=True)
@@ -38,85 +36,75 @@ def fit_lifetime_T(data_fit):
 color1 = sns.color_palette("tab10", 8)[0]
 color2 = sns.color_palette("tab10", 8)[1]
 
-with st.expander("Load data"):
-    folder = st.text_input("Folder", '/Users/mathias/Desktop')
+file = st.file_uploader('Load data', type={"dat"})
 
-    def file_selector(folder_path=folder):
-        filenames = os.listdir(folder_path)
-        selected_filename = st.selectbox('Select a file', filenames)
-        return os.path.join(folder_path, selected_filename)
-
-
-    filename = file_selector(folder)
-    st.write('You selected `%s`' % filename)
-
-    if st.button('Show me what the data looks like'):
-        webbrowser.get("open -a /Applications/Firefox.app %s").open_new('file://'+ filename)
+if file is not None:
 
     Skirows = st.number_input('Skirows', value = 10)
     Use_column = st.number_input('Column', value  = 2)
 
-data = np.loadtxt(filename,skiprows=Skirows)[:,Use_column]
+    data = np.loadtxt(file,skiprows=Skirows)[:,Use_column]
 
-## Sidebar widgets
-central = st.sidebar.slider('Cursor', 0, len(data), 0)
-zoom = st.sidebar.slider('zoom', 1, int(len(data)), 800)
+    ## Sidebar widgets
+    central = st.sidebar.slider('Cursor', 0, len(data), 0)
+    zoom = st.sidebar.slider('zoom', 1, int(len(data)), 800)
 
-start = st.sidebar.slider('Start', 2300, 2700, 2353 )
-stop = st.sidebar.slider('Stop', 2300, 2900, 2480)
+    start = st.sidebar.slider('Start', 2300, 2700, 2353 )
+    stop = st.sidebar.slider('Stop', 2300, 2900, 2480)
 
-data_fit = data[start:stop]
+    data_fit = data[start:stop]
 
-log_scale = st.sidebar.checkbox('Log scale')
-excitonic_particle = st.sidebar.selectbox(
-    'What are we fitting today',
-    ('Exciton', 'Trion'))
-fit_details = st.sidebar.checkbox('Show fit details')
+    log_scale = st.sidebar.checkbox('Log scale')
+    excitonic_particle = st.sidebar.selectbox(
+        'What are we fitting today',
+        ('Exciton', 'Trion'))
+    fit_details = st.sidebar.checkbox('Show fit details')
 
-if fit_details:
-    c_ = st.sidebar.slider('c', 0, int(np.max(data_fit)), 2380)
-    tau_ = st.sidebar.slider('tau', 0.0, 0.250, 0.145)
-else:
-    c_ = 2380
-    tau_ = 0.145
+    if fit_details:
+        c_ = st.sidebar.slider('c', 0, int(np.max(data_fit)), 2380)
+        tau_ = st.sidebar.slider('tau', 0.0, 0.250, 0.145)
+    else:
+        c_ = 2380
+        tau_ = 0.145
 
-# Fit
-# resolution is 4 ps. X axis is in ns
-X_fit = 0.004*np.arange(0,len(data_fit))
-X = 0.004*np.arange(0,len(data))
+    # Fit
+    # resolution is 4 ps. X axis is in ns
+    X_fit = 0.004*np.arange(0,len(data_fit))
+    X = 0.004*np.arange(0,len(data))
 
 
-# Plot
-fig, ax = plt.subplots()
-if excitonic_particle == 'Exciton':
-    fit_X = fit_lifetime_X(data_fit)
+    # Plot
+    fig, ax = plt.subplots()
+    if excitonic_particle == 'Exciton':
+        fit_X = fit_lifetime_X(data_fit)
 
-    tau =  fit_X.params['tau'].value
-    w =  fit_X.params['w'].value
+        tau =  fit_X.params['tau'].value
+        w =  fit_X.params['w'].value
 
-    hbar = scipy.constants.hbar
-    eV = scipy.constants.e
+        hbar = scipy.constants.hbar
+        eV = scipy.constants.e
 
-    ax.plot(X - start * 0.004, data, 'o', color=color1, markersize=3)
-    ax.plot(X_fit,  fit_X.best_fit, '--', color=color2)
-    ax.set_title('Lifetime = ' + str(round(tau * 1000, 2)) + ' ps, FSS = ' + str(round(1e9 * w * 2 * hbar / eV, 9)) + ' eV', )
+        ax.plot(X - start * 0.004, data, 'o', color=color1, markersize=3)
+        ax.plot(X_fit,  fit_X.best_fit, '--', color=color2)
+        ax.set_title('Lifetime = ' + str(round(tau * 1000, 2)) + ' ps, FSS = ' + str(round(1e9 * w * 2 * hbar / eV, 9)) + ' eV', )
 
-else:
-    fit_T = fit_lifetime_T(data_fit)
-    tau = fit_T.params['tau'].value
+    else:
+        fit_T = fit_lifetime_T(data_fit)
+        tau = fit_T.params['tau'].value
 
-    ax.plot(X - start * 0.004, data, 'o', color=color1, markersize=3)
-    ax.plot(X_fit, fit_T.best_fit, '--', color=color2)
-    ax.set_title('Lifetime = ' + str(round(tau * 1000, 2)) + ' ps')
+        ax.plot(X - start * 0.004, data, 'o', color=color1, markersize=3)
+        ax.plot(X_fit, fit_T.best_fit, '--', color=color2)
+        ax.set_title('Lifetime = ' + str(round(tau * 1000, 2)) + ' ps')
 
-ax.tick_params(direction='in', bottom=True, top=True, left=True, right=True, labelsize=14)
-if log_scale:
-    ax.set_yscale('log')
-ax.set_xlabel('Time [ns]', fontsize = 18)
-ax.axvline(central*0.004, linestyle = '--')
-ax.axvline(start*0.004-start*0.004, color = 'green')
-ax.axvline(stop*0.004-start*0.004, color = 'red')
-ax.set_ylabel('Counts', fontsize = 18)
-ax.set_xlim(central*0.004-zoom*0.004/2, central*0.004+zoom*0.004/2)
+    ax.tick_params(direction='in', bottom=True, top=True, left=True, right=True, labelsize=14)
+    if log_scale:
+        ax.set_yscale('log')
 
-st.pyplot(fig)
+    ax.set_xlabel('Time [ns]', fontsize = 18)
+    ax.axvline(central*0.004, linestyle = '--')
+    ax.axvline(start*0.004-start*0.004, color = 'green')
+    ax.axvline(stop*0.004-start*0.004, color = 'red')
+    ax.set_ylabel('Counts', fontsize = 18)
+    ax.set_xlim(central*0.004-zoom*0.004/2, central*0.004+zoom*0.004/2)
+
+    st.pyplot(fig)

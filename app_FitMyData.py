@@ -1,8 +1,12 @@
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
 @author: Mathias Pont
-
 """
+
+# to run the code, go to your terminal and >>> streamlit run app_FitMyData.py
+
+
 import streamlit as st
 from PIL import Image
 
