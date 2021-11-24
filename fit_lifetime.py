@@ -39,11 +39,10 @@ color2 = sns.color_palette("tab10", 8)[1]
 file = st.file_uploader('Load data', type={"dat"})
 
 if file is not None:
-
-    Skirows = st.number_input('Skirows', value = 10)
+    
     Use_column = st.number_input('Column', value  = 2)
 
-    data = np.loadtxt(file,skiprows=Skirows)[:,Use_column]
+    data = np.loadtxt(file,skiprows=10)[:,Use_column]
 
     ## Sidebar widgets
     central = st.sidebar.slider('Cursor', 0, len(data), 0)
