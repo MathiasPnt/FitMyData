@@ -9,25 +9,55 @@ from HOM_Toolbox import get_HOM_1input
 import plotly.graph_objects as go
 from plotly.graph_objs import *
 
-file = st.file_uploader('Load data', type={"txt"})
+def get_resolution(resolution):
+
+    # This is the values for 128 ps. For other resolution we simply use this as a ref
+    central_peak = 777  # index of central peak
+    bin_width = 22  # width of each peak
+    peak_sep = 96  # separation between peaks. If resolution of hydraharp is 128ps this should be 96
+    num_peaks = 8  # Number of peaks either side of central peak that will be used
+
+    return (128 / resolution) * central_peak, (128 / resolution) * bin_width, (128 / resolution) * peak_sep, (128 / resolution) * num_peaks
+
+col1, col2, col3= st.columns(3)
+with col1:
+    timetagger = st.radio("Select correlator", ('Swabian', 'HydraHarp'))
+
+file = st.file_uploader('Load data', type={"txt", "dat"})
 
 if file is not None:
 
-    data = np.loadtxt(file)[1]
+    if timetagger=='Swabian':
+        data = np.loadtxt(file)[1]
+        # Position of the time stamp of the central peak (zero delay) of the histogram
+        central_peak = st.sidebar.number_input('Central peak', 12400, 12600, 12500)
+        # Width of the peak
+        peak_width = st.sidebar.slider('Peak width', 0, 50, 25)
+        # Separation between the peak [time stamp]
+        peak_sep = st.sidebar.number_input('Peak sep', 180, 200, 190)
+        # Number of side peaks used to normalise the central peak and get the g2
+        num_peaks = st.sidebar.slider('Number of peaks', 0, 20, 10)
+        # Create time axis
+        time = (np.arange(0, 25000))
+    else:
+        with col2:
+            Use_channel = st.number_input('Use channel Nº', value=2)
+        with col3:
+            resolution = st.selectbox('Resolution [ps]?', ('128', '64', '32', '16', '4'))
 
-    # Position of the time stamp of the central peak (zero delay) of the histogram
-    central_peak = st.sidebar.number_input('Central peak', 12400, 12600, 12500)
-    # Width of the peak
-    peak_width = st.sidebar.slider('Peak width', 0, 50, 25)
-    # Separation between the peak [time stamp]
-    peak_sep = st.sidebar.number_input('Peak sep', 180, 200, 190)
-    # Number of side peaks used to normalise the central peak and get the g2
-    num_peaks = st.sidebar.slider('Number of peaks', 0, 20, 10)
+        data = np.loadtxt(file, skiprows=10)[:, Use_channel]
+
+        # Set values
+        central_peak0, peak_width0, peak_sep0, num_peaks0 = get_resolution(int(resolution))
+
+        central_peak = st.sidebar.number_input('Central peak', 0, 65536, int(central_peak0))
+        peak_width = st.sidebar.slider('Peak width', 0, 100, int(peak_width0))
+        peak_sep = st.sidebar.number_input('Peak sep', 0, 65536, int(peak_sep0))
+        num_peaks = st.sidebar.slider('Number of peaks', 0, 20, int(num_peaks0))
+
+        time = (np.arange(0, 65536))
 
     HOM, errHOM = get_HOM_1input(data, peak_width, peak_sep, central_peak, num_peaks, baseline=True)
-
-    # Createe time axis
-    time = (np.arange(0, 25000))
 
     title_fig = 'HOM =' + str(round(HOM, 4)) + '±' + str(round(errHOM, 4))
     layout = Layout(
