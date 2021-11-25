@@ -40,8 +40,11 @@ color2 = sns.color_palette("tab10", 8)[1]
 file = st.file_uploader('Load data', type={"dat"})
 
 if file is not None:
-    
-    Use_column = st.number_input('Column', value = 2)
+
+    col1, col2 = st.columns(2)
+
+    with col1:
+        Use_column = st.number_input('Use channel Nº', value = 2)
 
     # For file extracted in ASCII from Picoquant software there are 10 lines of information
     # that we skip.
@@ -56,10 +59,10 @@ if file is not None:
     # We go back to time bin for the fit
     data_fit = data[int(start/0.004):int(stop/0.004)]
 
-
-    excitonic_particle = st.sidebar.selectbox(
-        'What are we fitting today',
-        ('Exciton', 'Trion'))
+    with col2:
+        excitonic_particle = st.selectbox(
+            'What is it?',
+            ('Exciton', 'Trion'))
 
     zoom_in= st.sidebar.checkbox('Zoom')
     log_scale = st.sidebar.checkbox('Log scale')
@@ -81,7 +84,7 @@ if file is not None:
     # Plot
     layout = Layout(plot_bgcolor='whitesmoke'
                     )
-    fig2 = go.Figure(layout=layout)
+    fig = go.Figure(layout=layout)
 
     if excitonic_particle == 'Exciton':
         fit_X = fit_lifetime_X(data_fit)
@@ -92,14 +95,15 @@ if file is not None:
         hbar = scipy.constants.hbar
         eV = scipy.constants.e
 
-        fig2.add_trace(go.Scatter(
+        fig.add_trace(go.Scatter(
             x=X,
             y=data,
             name="Data",
-            line=dict(color='blue', width=2)
+            marker=dict(color='darkcyan', size=6),
+            line=dict(color='darkcyan', width=2)
         ))
 
-        fig2.add_trace(go.Scatter(
+        fig.add_trace(go.Scatter(
             x=X_fit+start,
             y=fit_X.best_fit,
             name="Fit",
@@ -112,7 +116,7 @@ if file is not None:
         fit_T = fit_lifetime_T(data_fit)
         tau = fit_T.params['tau'].value
 
-        fig2.add_trace(go.Scatter(
+        fig.add_trace(go.Scatter(
             x=X,
             y=data,
             name="Data",
@@ -121,7 +125,7 @@ if file is not None:
             line=dict(color='darkcyan', width=2)
         ))
 
-        fig2.add_trace(go.Scatter(
+        fig.add_trace(go.Scatter(
             x=X_fit + start,
             y=fit_T.best_fit,
             name="Fit",
@@ -131,9 +135,15 @@ if file is not None:
         title_fig = 'Lifetime = ' + str(round(tau * 1000, 2)) + ' ps'
 
     if zoom_in:
-        fig2.update_layout(xaxis_range=[start-1, stop+1])
+        fig.update_layout(xaxis_range=[start-1, stop+1])
 
-    fig2.update_layout(title=title_fig,
+    if log_scale:
+        fig.update_yaxes(type="log")
+
+    fig.add_vline(x=start, line_width=2, line_dash="dash", line_color="seagreen")
+    fig.add_vline(x=stop, line_width=2, line_dash="dash", line_color="firebrick")
+
+    fig.update_layout(title=title_fig,
                     title_font_size=20,
                     width=800, height=500,
                     margin=dict(l=40, r=40, b=40, t=40),
@@ -143,4 +153,10 @@ if file is not None:
                     xaxis=dict(tickformat="000"),
                     yaxis=dict(tickformat="000")
                        )
-    st.plotly_chart(fig2)
+
+    if log_scale:
+        fig.update_yaxes(type="log")
+        fig.update_layout(yaxis=dict(tickformat=".1r"))
+
+    st.plotly_chart(fig)
+
