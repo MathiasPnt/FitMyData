@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
 @author: Mathias Pont
@@ -9,6 +8,8 @@ import seaborn as sns
 import scipy
 import streamlit as st
 from lmfit import Model
+import plotly.graph_objects as go
+from plotly.graph_objs import *
 
 @st.cache(show_spinner=True)
 def cos_decay(x, b, c, phi, w, tau):
@@ -40,28 +41,33 @@ file = st.file_uploader('Load data', type={"dat"})
 
 if file is not None:
     
-    Use_column = st.number_input('Column', value  = 2)
+    Use_column = st.number_input('Column', value = 2)
 
+    # For file extracted in ASCII from Picoquant software there are 10 lines of information
+    # that we skip.
     data = np.loadtxt(file,skiprows=10)[:,Use_column]
 
     ## Sidebar widgets
-    central = st.sidebar.slider('Cursor', 0, len(data), 0)
-    zoom = st.sidebar.slider('zoom', 1, int(len(data)), 800)
 
-    start = st.sidebar.slider('Start', 2300, 2700, 2353 )
-    stop = st.sidebar.slider('Stop', 2300, 2900, 2480)
+    # Start and stop in [ns]
+    start = st.sidebar.number_input('Start [ns]', 0.0, len(data)*0.004, 9.0)
+    stop = st.sidebar.number_input('Stop [ns]', 0.0, len(data)*0.004, 12.0)
 
-    data_fit = data[start:stop]
+    # We go back to time bin for the fit
+    data_fit = data[int(start/0.004):int(stop/0.004)]
 
-    log_scale = st.sidebar.checkbox('Log scale')
+
     excitonic_particle = st.sidebar.selectbox(
         'What are we fitting today',
         ('Exciton', 'Trion'))
-    fit_details = st.sidebar.checkbox('Show fit details')
 
+    zoom_in= st.sidebar.checkbox('Zoom')
+    log_scale = st.sidebar.checkbox('Log scale')
+
+    fit_details = st.sidebar.checkbox('Change fit parameters')
     if fit_details:
-        c_ = st.sidebar.slider('c', 0, int(np.max(data_fit)), 2380)
-        tau_ = st.sidebar.slider('tau', 0.0, 0.250, 0.145)
+        c_ = st.sidebar.slider('height', 0, int(np.max(data_fit)), int(np.max(data_fit)))
+        tau_ = st.sidebar.slider('lifetime [ns]', 0.0, 0.250, 0.145)
     else:
         c_ = 2380
         tau_ = 0.145
@@ -73,7 +79,10 @@ if file is not None:
 
 
     # Plot
-    fig, ax = plt.subplots()
+    layout = Layout(plot_bgcolor='whitesmoke'
+                    )
+    fig2 = go.Figure(layout=layout)
+
     if excitonic_particle == 'Exciton':
         fit_X = fit_lifetime_X(data_fit)
 
@@ -83,27 +92,55 @@ if file is not None:
         hbar = scipy.constants.hbar
         eV = scipy.constants.e
 
-        ax.plot(X - start * 0.004, data, 'o', color=color1, markersize=3)
-        ax.plot(X_fit,  fit_X.best_fit, '--', color=color2)
-        ax.set_title('Lifetime = ' + str(round(tau * 1000, 2)) + ' ps, FSS = ' + str(round(1e9 * w * 2 * hbar / eV, 9)) + ' eV', )
+        fig2.add_trace(go.Scatter(
+            x=X,
+            y=data,
+            name="Data",
+            line=dict(color='blue', width=2)
+        ))
+
+        fig2.add_trace(go.Scatter(
+            x=X_fit+start,
+            y=fit_X.best_fit,
+            name="Fit",
+            line=dict(color='gold', width=2)
+        ))
+
+        title_fig = 'Lifetime = ' + str(round(tau * 1000, 2)) + ' ps, FSS = ' + str(round(1e9 * w * 2 * hbar / eV, 9)) + ' eV'
 
     else:
         fit_T = fit_lifetime_T(data_fit)
         tau = fit_T.params['tau'].value
 
-        ax.plot(X - start * 0.004, data, 'o', color=color1, markersize=3)
-        ax.plot(X_fit, fit_T.best_fit, '--', color=color2)
-        ax.set_title('Lifetime = ' + str(round(tau * 1000, 2)) + ' ps')
+        fig2.add_trace(go.Scatter(
+            x=X,
+            y=data,
+            name="Data",
+            mode='lines+markers',
+            marker=dict(color='darkcyan', size=6),
+            line=dict(color='darkcyan', width=2)
+        ))
 
-    ax.tick_params(direction='in', bottom=True, top=True, left=True, right=True, labelsize=14)
-    if log_scale:
-        ax.set_yscale('log')
+        fig2.add_trace(go.Scatter(
+            x=X_fit + start,
+            y=fit_T.best_fit,
+            name="Fit",
+            line=dict(color='gold', width=2)
+        ))
 
-    ax.set_xlabel('Time [ns]', fontsize = 18)
-    ax.axvline(central*0.004, linestyle = '--')
-    ax.axvline(start*0.004-start*0.004, color = 'green')
-    ax.axvline(stop*0.004-start*0.004, color = 'red')
-    ax.set_ylabel('Counts', fontsize = 18)
-    ax.set_xlim(central*0.004-zoom*0.004/2, central*0.004+zoom*0.004/2)
+        title_fig = 'Lifetime = ' + str(round(tau * 1000, 2)) + ' ps'
 
-    st.pyplot(fig)
+    if zoom_in:
+        fig2.update_layout(xaxis_range=[start-1, stop+1])
+
+    fig2.update_layout(title=title_fig,
+                    title_font_size=20,
+                    width=800, height=500,
+                    margin=dict(l=40, r=40, b=40, t=40),
+                    xaxis_title="Time [ns]",
+                    yaxis_title="Counts",
+                    legend_title="Legend",
+                    xaxis=dict(tickformat="000"),
+                    yaxis=dict(tickformat="000")
+                       )
+    st.plotly_chart(fig2)

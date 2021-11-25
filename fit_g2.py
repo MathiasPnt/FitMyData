@@ -24,11 +24,15 @@ col1, col2, col3= st.columns(3)
 with col1:
     timetagger = st.radio("Select correlator", ('Swabian', 'HydraHarp'))
 
+# Uploading data in .txt or .dat format only.
 file = st.file_uploader('Load data', type={"txt", "dat"})
 
 if file is not None:
 
     if timetagger=='Swabian':
+        # The data has been saved using:
+        # np.savetxt(file.txt, [index, hist])
+        # we only use the hist
         data = np.loadtxt(file)[1]
         # Position of the time stamp of the central peak (zero delay) of the histogram
         central_peak = st.sidebar.number_input('Central peak', 12400, 12600, 12500)
@@ -46,9 +50,11 @@ if file is not None:
         with col3:
             resolution = st.selectbox('Resolution [ps]?', ('128', '64', '32', '16', '4'))
 
+        # For file extracted in ASCII from Picoquant software there are 10 lines of information
+        # that we skip.
         data = np.loadtxt(file, skiprows=10)[:, Use_channel]
 
-        # Set values
+        # Initial values that will then be finely adjusted by the user
         central_peak0, peak_width0, peak_sep0, num_peaks0 = get_resolution(int(resolution))
 
         central_peak = st.sidebar.number_input('Central peak', 0, 65536, int(central_peak0))
@@ -61,7 +67,9 @@ if file is not None:
     g2, errg2 = get_g2_1input(data, peak_width, peak_sep, central_peak, num_peaks, baseline=True)
 
 
-    title_fig = 'g2 =' + str(round(g2, 4))+'±'+str(round(errg2, 4))
+    zoom = st.sidebar.slider('Zoom out [number of peaks displayed]', 1, 20, 3)
+
+    title_fig = 'g2 =' + str(round(g2, 4))+ '±' + str(round(errg2, 4))
     layout = Layout(plot_bgcolor='whitesmoke'
                     )
     fig2 = go.Figure(layout=layout)
@@ -87,13 +95,13 @@ if file is not None:
         line=dict(color='gold', width=2)
     ))
     fig2.update_layout(title=title_fig,
-                    title_font_size=18,
+                    title_font_size=20,
                     width=800, height=500,
                     margin=dict(l=40, r=40, b=40, t=40),
-                    xaxis_title="Time [ns]",
+                    xaxis_title="Time [time bin]",
                     yaxis_title="Counts",
                     legend_title="Legend",
-                    xaxis_range = [-3*peak_sep+central_peak,3*peak_sep+central_peak],
+                    xaxis_range = [-zoom*peak_sep+central_peak,zoom*peak_sep+central_peak],
                     xaxis=dict(tickformat="000"),
                     yaxis=dict(tickformat="000")
                        )
