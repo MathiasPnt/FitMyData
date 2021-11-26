@@ -59,7 +59,7 @@ if file is not None:
     else:
         with col2:
             # Channel used with the HydraHarp (starts at 0).
-            use_channel = st.number_input('Use channel Nº', value=2)
+            use_channel = st.number_input('Use channel Nº', value=0)
         with col3:
             # Resolution used in [ps]
             resolution = st.selectbox('Resolution [ps]?', ('128', '64', '32', '16', '4'))
