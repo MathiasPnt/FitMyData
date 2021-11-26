@@ -1,6 +1,26 @@
 # -*- coding: utf-8 -*-
 """
-@author: Mathias Pont
+@Authors: Mathias Pont
+@Contributors:
+
+This script gets the central frequency, width and quality factor of a microcavity.
+
+Input: .txt file downloaded from your computer using the app. Reflectivity spectrum
+measured with a broadband LED and a spectrometer. x axis is WL in px. y axis is intensity.
+
+Output: Displays a graph and gives the central frequency of the fondamental mode, the FWHM and the quality factor
+of the microcavity.
+
+Do not forget to calibrate your spectrometer !!
+
+Comments:
+Here is how to export ASCII from Winspec to get the good format for your .txt file:
+File Extension: txt
+Delimiter = Tab            Output order = Pixel, Intensity
+X-Axis unit = pixel        New Line Characters = Carriage return: yes, Line Feed: yes.
+Output File Options = One File For All Frames and Single Column
+Pixel Format = Convert CCD X/Y Dimension into 1 Dimension
+
 """
 
 import numpy as np
@@ -16,13 +36,13 @@ from plotly.graph_objs import *
 # column 1 = x abscisse in px
 # column 2 = intensity
 
-color1 = sns.color_palette("tab10", 8)[0]
-color2 = sns.color_palette("tab10", 8)[1]
-
+# Upload a file from your computer.
 file = st.file_uploader('Load data', type={"txt"})
 
 if file is not None:
-    data = [np.loadtxt(file), 'Title']
+
+    # We only use the y axis stored in the second column of the .txt file here.
+    data = np.loadtxt(file)[:, 1]
 
 
     # Conversion from px to eV
@@ -49,14 +69,6 @@ if file is not None:
     def get_WLaxis(spectro, nb_px, calib):
         return px_to_nm(spectro, get_Xaxis(nb_px), calib)
 
-    # get intensity specrum
-    def get_Spectrum(data):
-        return data[0][:, 1]
-
-    # Name of the file. Should contain pillar name and experimental details.
-    def get_Title(data):
-        return data[1]
-
 
     # Toolbox for fit.
     def add_peak(prefix, center, amplitude=-1000, sigma=100e-6):
@@ -81,94 +93,83 @@ if file is not None:
     # create E axis
     E = get_Eaxis(Spectro, Nb_px, Calib)
 
+    xdat = get_Eaxis(Spectro, Nb_px, Calib)
+    ydat = data
 
-    def get_Q(file):
+    model = QuadraticModel(prefix="bkg_")
+    params = model.make_params(a=0, b=0, c=0)
 
-        xdat = get_Eaxis(Spectro, Nb_px, Calib)
-        ydat = get_Spectrum(file)
-        name = get_Title(file)
+    peaks, properties = find_peaks(-ydat, prominence=300, width=3)
 
-        model = QuadraticModel(prefix="bkg_")
-        params = model.make_params(a=0, b=0, c=0)
+    peaks_size = properties["prominences"]
+    max_peak = np.argmax(peaks_size)
 
-        peaks, properties = find_peaks(-ydat, prominence=300, width=3)
+    # Find the number_of_elements largest peaks in peaks.
+    # This is usefull is you see many modes that are too close to each other. If you only see one use 1
+    number_of_elements = st.sidebar.number_input('Number of modes', value = 1)
+    largest_peaks = heapq.nlargest(number_of_elements, enumerate(peaks_size), key=lambda x: x[1])
 
-        peaks_size = properties["prominences"]
-        max_peak = np.argmax(peaks_size)
+    CenterPx = peaks[max_peak]
+    # This might need to be adapted depending on the width of the cabvity
+    # Try more or less, but around 100 is good for Q = 10 000
+    zoom_fit = st.sidebar.number_input('Zoom fit', value=75)
+    start = CenterPx - zoom_fit
+    stop = CenterPx + zoom_fit
 
-        # Find the number_of_elements largest peaks in peaks.
-        # This is usefull is you see many modes that are too close to each other. If you only see one use 1
-        number_of_elements = st.sidebar.number_input('Number of modes', value = 1)
-        largest_peaks = heapq.nlargest(number_of_elements, enumerate(peaks_size), key=lambda x: x[1])
+    ydat_fit = ydat[start:stop]
+    xdat_fit = xdat[start:stop]
 
-        CenterPx = peaks[max_peak]
-        # This might need to be adapted depending on the width of the cabvity
-        # Try more or less, but around 100 is good for Q = 10 000
-        zoom_fit = st.sidebar.number_input('Zoom fit', value=75)
-        start = CenterPx - zoom_fit
-        stop = CenterPx + zoom_fit
+    rough_peak_positions = ()
+    for i in [peaks[x] for x in [idx[0] for idx in largest_peaks]]:
+        rough_peak_positions += (px_to_eV(Spectro, i, Calib),)
 
-        ydat_fit = ydat[start:stop]
-        xdat_fit = xdat[start:stop]
+    for i, cen in enumerate(rough_peak_positions):
+        peak, pars = add_peak("lz%d_" % (i + 1), cen)
+        model = model + peak
+        params.update(pars)
 
-        rough_peak_positions = ()
-        for i in [peaks[x] for x in [idx[0] for idx in largest_peaks]]:
-            rough_peak_positions += (px_to_eV(Spectro, i, Calib),)
+    init = model.eval(params, x=xdat_fit)
+    result = model.fit(ydat_fit, params, x=xdat_fit)
+    xc = result.params["lz1_center"].value
+    sigma = result.params["lz1_sigma"].value
 
-        for i, cen in enumerate(rough_peak_positions):
-            peak, pars = add_peak("lz%d_" % (i + 1), cen)
-            model = model + peak
-            params.update(pars)
+    FWHM = 2*sigma
 
-        init = model.eval(params, x=xdat_fit)
-        result = model.fit(ydat_fit, params, x=xdat_fit)
-        xc = result.params["lz1_center"].value
-        sigma = result.params["lz1_sigma"].value
+    Q = round(xc / FWHM, 2)
+    FWHM = round(FWHM * 1e6, 2)
+    xc = round(xc, 6)
 
-        w = 2*sigma
+    title_fig = "xc = " + str(round(xc,5))+"eV | κ = " + str(FWHM) + " µeV" + " | Q = " + str(Q)
+    layout = Layout(
+        plot_bgcolor='whitesmoke'
+    )
+    fig = go.Figure(layout=layout)
+    fig.add_trace(go.Scatter(
+        x=xdat,
+        y=ydat,
+        name="Data",
+        mode='lines+markers',
+        marker = dict(color='darkcyan', size=6),
+        line=dict(color='teal', width=2)
+    ))
+    fig.add_trace(go.Scatter(
+        x=xdat_fit,
+        y=result.best_fit,
+        name="Fit",
+        line=dict(color='gold', width=2, dash='dash')
+    ))
+    fig.update_layout(title=title_fig,
+                        title_font_size=18,
+                        width=800, height=500,
+                        margin=dict(l=40, r=40, b=40, t=40),
+                        xaxis_title="Energy [eV]",
+                        yaxis_title="Counts",
+                        legend_title="Legend",
+                      xaxis=dict(tickformat="000"),
+                      yaxis=dict(tickformat="000")
+    )
+    st.plotly_chart(fig)
 
-        Q = round(xc / w, 2)
-        w = round(w * 1e6, 2)
-        xc = round(xc, 6)
-
-        #fig, ax = plt.subplots()
-        #ax.plot(xdat, ydat, "-o", label="data")
-        #ax.plot(xdat_fit, result.best_fit, label="best fit")
-        #ax.axvline(x=xc, linestyle="--")
-        #ax.set_title("$x_c$ = " + str(round(xc,5))+"eV | κ = " + str(w) + " µeV" + " | Q = " + str(Q), size=14)
-        #st.pyplot(fig)
-
-        title_fig = "xc = " + str(round(xc,5))+"eV | κ = " + str(w) + " µeV" + " | Q = " + str(Q)
-        layout = Layout(
-            plot_bgcolor='whitesmoke'
-        )
-        fig2 = go.Figure(layout=layout)
-        fig2.add_trace(go.Scatter(
-            x=xdat,
-            y=ydat,
-            name="Data",
-            mode='lines+markers',
-            marker = dict(color='darkcyan', size=6),
-            line=dict(color='teal', width=2)
-        ))
-        fig2.add_trace(go.Scatter(
-            x=xdat_fit,
-            y=result.best_fit,
-            name="Fit",
-            line=dict(color='gold', width=2, dash='dash')
-        ))
-        fig2.update_layout(title=title_fig,
-                            title_font_size=18,
-                            width=800, height=500,
-                            margin=dict(l=40, r=40, b=40, t=40),
-                            xaxis_title="Energy [eV]",
-                            yaxis_title="Counts",
-                            legend_title="Legend",
-        )
-        st.plotly_chart(fig2)
-
-
-    get_Q(data)
 
 
 

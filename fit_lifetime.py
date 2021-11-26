@@ -1,7 +1,16 @@
 # -*- coding: utf-8 -*-
 """
-@author: Mathias Pont
+@Authors: Mathias Pont
+@Contributors:
+
+This script gets the lifetime (and FSS) for a Trion or an Exciton from the Time evolution of the emission
+
+Input: .dat (HydraHarp) file downloaded from your computer using the app. Resolution must be 4 ps.
+
+Output: Displays a graph and gives the lifetime (in ps) and FSS (in eV).
+
 """
+
 import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
@@ -11,18 +20,21 @@ from lmfit import Model
 import plotly.graph_objects as go
 from plotly.graph_objs import *
 
-@st.cache(show_spinner=True)
-def cos_decay(x, b, c, phi, w, tau):
-    return ( b * np.sin(w*x+phi)**2) * ( c * np.exp(-x/tau))
-@st.cache(show_spinner=True)
+# Some constants used to get the FSS in eV
+hbar = scipy.constants.hbar
+eV = scipy.constants.e
+
+def cosine_decay(x, c1, c2, phi, w, tau):
+    return ( c1 * np.sin(w*x+phi)**2) * ( c2 * np.exp(-x/tau))
+
 def exp_decay(x, y0, N0, t0, tau):
     return y0+N0*np.exp(-(x-t0)/tau)
 
 @st.cache(show_spinner=True)
 def fit_lifetime_X(data_fit):
-    mod = Model(cos_decay)
-    # Initial parameter
-    pars = mod.make_params(b = 1, c = c_, phi = 0, w = 4, tau = tau_)
+    mod = Model(cosine_decay)
+    # Initial parameter for the fit
+    pars = mod.make_params(c1 = 1, c2 = c_, phi = 0, w = w_, tau = tau_)
     result = mod.fit(data_fit, pars, x = X_fit)
     return result
 
@@ -34,39 +46,43 @@ def fit_lifetime_T(data_fit):
     result = mod.fit(data_fit, pars, x = X_fit)
     return result
 
-color1 = sns.color_palette("tab10", 8)[0]
-color2 = sns.color_palette("tab10", 8)[1]
-
+# Upload a file from your computer. Has to be a .dat (ASCII export from HydraHarp).
 file = st.file_uploader('Load data', type={"dat"})
 
 if file is not None:
 
+    # This creates columns for widgets.
     col1, col2 = st.columns(2)
 
+    # This is how you add womething to one column.
     with col1:
         Use_column = st.number_input('Use channel Nº', value = 2)
 
-    # For file extracted in ASCII from Picoquant software there are 10 lines of information
-    # that we skip.
-    data = np.loadtxt(file,skiprows=10)[:,Use_column]
+    # For file extracted in ASCII from Picoquant software there are 10 lines of information that we skip.
+    data = np.loadtxt(file,skiprows=10)[:, Use_column]
 
     ## Sidebar widgets
 
     # Start and stop in [ns]
+    # We will fit between start and stop only. These parameters influence the fit a lot.
     start = st.sidebar.number_input('Start [ns]', 0.0, len(data)*0.004, 9.0)
     stop = st.sidebar.number_input('Stop [ns]', 0.0, len(data)*0.004, 12.0)
 
-    # We go back to time bin for the fit
+    # We go back to time bin for the fit.
     data_fit = data[int(start/0.004):int(stop/0.004)]
 
     with col2:
+        # Select if you want to fit a Trion or an Exciton
         excitonic_particle = st.selectbox(
             'What is it?',
             ('Exciton', 'Trion'))
 
+    # Zoom in from start - 1 ns to stop + 1 ns
     zoom_in= st.sidebar.checkbox('Zoom')
+    # Display graph in log scale
     log_scale = st.sidebar.checkbox('Log scale')
 
+    # Use different parameters for the fit. If unchecked you use defualt values.
     fit_details = st.sidebar.checkbox('Change fit parameters')
     if fit_details:
         c_ = st.sidebar.slider('height', 0, int(np.max(data_fit)), int(np.max(data_fit)))
@@ -74,38 +90,45 @@ if file is not None:
     else:
         c_ = 2380
         tau_ = 0.145
+        w_ = 4
+
+    if fit_details and excitonic_particle == 'Exciton':
+        w_ = st.sidebar.slider('FSS', 0, 10, 4)
 
     # Fit
-    # resolution is 4 ps. X axis is in ns
+    # !!! Resolution is 4 ps. X axis is in ns !!!
     X_fit = 0.004*np.arange(0,len(data_fit))
     X = 0.004*np.arange(0,len(data))
 
 
-    # Plot
+    # Create an interactive plotly plot. No more comments needed here.
     layout = Layout(plot_bgcolor='whitesmoke'
                     )
     fig = go.Figure(layout=layout)
 
     if excitonic_particle == 'Exciton':
+
         fit_X = fit_lifetime_X(data_fit)
 
+        # gets the y value of the fit
+        Y_fit = fit_X.best_fit
+        # Lifetime
         tau =  fit_X.params['tau'].value
+        # pulsation of the oscillations
         w =  fit_X.params['w'].value
-
-        hbar = scipy.constants.hbar
-        eV = scipy.constants.e
 
         fig.add_trace(go.Scatter(
             x=X,
             y=data,
             name="Data",
+            mode='lines+markers',
             marker=dict(color='darkcyan', size=6),
             line=dict(color='darkcyan', width=2)
         ))
 
         fig.add_trace(go.Scatter(
             x=X_fit+start,
-            y=fit_X.best_fit,
+            y=Y_fit,
             name="Fit",
             line=dict(color='gold', width=2)
         ))
@@ -114,6 +137,10 @@ if file is not None:
 
     else:
         fit_T = fit_lifetime_T(data_fit)
+
+        # gets the y value of the fit
+        Y_fit = fit_T.best_fit
+        # Lifetime
         tau = fit_T.params['tau'].value
 
         fig.add_trace(go.Scatter(
@@ -127,7 +154,7 @@ if file is not None:
 
         fig.add_trace(go.Scatter(
             x=X_fit + start,
-            y=fit_T.best_fit,
+            y=Y_fit,
             name="Fit",
             line=dict(color='gold', width=2)
         ))

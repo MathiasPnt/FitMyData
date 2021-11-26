@@ -1,6 +1,13 @@
 # -*- coding: utf-8 -*-
 """
-@author: Mathias Pont
+@Authors: Mathias Pont
+@Contributors:
+
+This script gets the raw V_HOM (1-2*g2(0)) of an histogram.
+Input: .txt (Swabian) or .dat (HydraHarp) file downloaded from your computer using the app
+
+Output: Displays a graph and gives the raw V_HOM ± statistical error.
+
 """
 
 import numpy as np
@@ -9,6 +16,8 @@ from HOM_Toolbox import get_HOM_1input
 import plotly.graph_objects as go
 from plotly.graph_objs import *
 
+# Depending on the resolution used during acquisition the values used to get the integraded value of the central
+# peak and peak size varies.
 def get_resolution(resolution):
 
     # This is the values for 128 ps. For other resolution we simply use this as a ref
@@ -17,13 +26,17 @@ def get_resolution(resolution):
     peak_sep = 96  # separation between peaks. If resolution of hydraharp is 128ps this should be 96
     num_peaks = 8  # Number of peaks either side of central peak that will be used
 
-    return (128 / resolution) * central_peak, (128 / resolution) * bin_width, (128 / resolution) * peak_sep, (128 / resolution) * num_peaks
+    return (128 / resolution) * central_peak, \
+           (128 / resolution) * bin_width, \
+           (128 / resolution) * peak_sep, \
+           (128 / resolution) * num_peaks
 
 col1, col2, col3= st.columns(3)
 with col1:
+    # Select which TimeTagger is used
     timetagger = st.radio("Select correlator", ('Swabian', 'HydraHarp'))
 
-# Uploading data in .txt or .dat format only.
+# Uploading data (in .txt or .dat format only).
 file = st.file_uploader('Load data', type={"txt", "dat"})
 
 if file is not None:
@@ -41,26 +54,28 @@ if file is not None:
         peak_sep = st.sidebar.number_input('Peak sep', 180, 200, 190)
         # Number of side peaks used to normalise the central peak and get the g2
         num_peaks = st.sidebar.slider('Number of peaks', 0, 20, 10)
-        # Create time axis
+        # Create time axis to plot
         time = (np.arange(0, 25000))
     else:
         with col2:
-            Use_channel = st.number_input('Use channel Nº', value=2)
+            # Channel used with the HydraHarp (starts at 0).
+            use_channel = st.number_input('Use channel Nº', value=2)
         with col3:
+            # Resolution used in [ps]
             resolution = st.selectbox('Resolution [ps]?', ('128', '64', '32', '16', '4'))
 
-        # For file extracted in ASCII from Picoquant software there are 10 lines of information
-        # that we skip.
-        data = np.loadtxt(file, skiprows=10)[:, Use_channel]
+        # For file extracted in ASCII from Picoquant software there are 10 lines of information that we skip.
+        data = np.loadtxt(file, skiprows=10)[:, use_channel]
 
         # Initial values that will then be finely adjusted by the user
         central_peak0, peak_width0, peak_sep0, num_peaks0 = get_resolution(int(resolution))
 
+        # Creating widget for the app. Here we put them in a sidebar.
         central_peak = st.sidebar.number_input('Central peak', 0, 65536, int(central_peak0))
         peak_width = st.sidebar.slider('Peak width', 0, 100, int(peak_width0))
         peak_sep = st.sidebar.number_input('Peak sep', 0, 65536, int(peak_sep0))
         num_peaks = st.sidebar.slider('Number of peaks', 0, 20, int(num_peaks0))
-
+        # Create time axis to plot
         time = (np.arange(0, 65536))
 
     HOM, errHOM = get_HOM_1input(data, peak_width, peak_sep, central_peak, num_peaks, baseline=True)
