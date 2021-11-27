@@ -15,7 +15,7 @@ import streamlit as st
 from HOM_Toolbox import get_HOM_1input
 import plotly.graph_objects as go
 from plotly.graph_objs import *
-from scipy.signal import find_peaks
+from scipy.signal import find_peaks, peak_widths
 
 col1, col2 = st.columns(2)
 with col1:
@@ -99,8 +99,8 @@ if file is not None:
         line=dict(color='teal', width=2)
     ))
     fig2.add_trace(go.Scatter(
-        x=time_p,
-        y=p,
+        x=peaks,
+        y=data_pk,
         name="Peaks",
         mode='markers',
         marker=dict(color='yellow', size=10),

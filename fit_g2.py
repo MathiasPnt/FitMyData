@@ -17,7 +17,6 @@ import plotly.graph_objects as go
 from plotly.graph_objs import *
 from scipy.signal import find_peaks, peak_widths
 
-
 col1, col2 = st.columns(2)
 with col1:
     # Select which TimeTagger is used
