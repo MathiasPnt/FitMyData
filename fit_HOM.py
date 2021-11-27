@@ -17,74 +17,99 @@ import plotly.graph_objects as go
 from plotly.graph_objs import *
 from scipy.signal import find_peaks, peak_widths
 
-col1, col2 = st.columns(2)
-with col1:
-    # Select which TimeTagger is used
-    timetagger = st.radio("Select correlator", ('Swabian', 'HydraHarp'))
-
-# Uploading data (in .txt or .dat format only).
-file = st.file_uploader('Load data', type={"txt", "dat"})
-
-if file is not None:
-    # Get the histogram from the data file depending on which correlator was used.
-    if timetagger=='Swabian':
-        # The data has been saved using:
-        # np.savetxt(file.txt, [index, hist])
-        # we only use the hist
-        data = np.loadtxt(file)[1]
-    else:
-        with col2:
-            # Channel used with the HydraHarp (starts at 0).
-            use_channel = st.number_input('Use channel Nº', value=0)
-
-        # For file extracted in ASCII from Picoquant software there are 10 lines of information that we skip.
-        data = np.loadtxt(file, skiprows=10)[:, use_channel]
-
-    # Create time axis to plot
-    time = (np.arange(0, len(data)))
-
+@st.cache(suppress_st_warning=True)
+def find_sidepeaks(data):
     # Peak finder
     # peaks is a list of the index of all peaks with a certain prominence and width
-    peaks, properties = find_peaks(data, prominence=np.max(data)/2, width=4, distance=50)
+    peaks, properties = find_peaks(data, prominence=np.max(data) / 2, width=4, distance=50)
 
     # histogram with only the side peaks
     data_pk = data[peaks]
 
-    to_delete = np.where(data_pk < max(data_pk)/2)
+    to_delete = np.where(data_pk < max(data_pk) / 2)
     data_pk = np.delete(data_pk, to_delete)
     peaks = np.delete(peaks, to_delete)
 
+    # Gets the width of the peaks. With 1 we take the full peak. 0.99 allows to get rid of the unwanted noise.
     results_full = peak_widths(data, peaks, rel_height=0.99)
-    pk_width = int(np.mean(results_full[0])) # widths
-
 
     # get all peak separation
     p_sep = []
-    for i in range(len(peaks)-1):
-        to_add = peaks[i+1]-peaks[i]
+    for i in range(len(peaks) - 1):
+        to_add = peaks[i + 1] - peaks[i]
         p_sep = p_sep + [to_add]
 
     # delete the separation that corresponds to the central peak
     # to_delete is then also the index of the first "side peak" in peaks.
-    to_delete = np.where(p_sep > np.mean(p_sep)+np.std(p_sep)/2)
+    to_delete = np.where(p_sep > np.mean(p_sep) + np.std(p_sep) / 2)
     p_sep = np.delete(p_sep, to_delete)
 
-    # Use the mean value as peak separation
+    # Use the mean value and int
+    pk_width = int(np.mean(results_full[0]))  # widths
     pk_sep = int(np.mean(p_sep))
-    ct_peak = int(peaks[to_delete]+pk_sep)
+    ct_peak = int(peaks[to_delete] + pk_sep)
 
-    # Creating widget for the app. Here we put them in a sidebar.
-    # Position of the time stamp of the central peak (zero delay) of the histogram
-    # Number of side peaks used to normalise the central peak and get the g2
-    num_peaks = st.sidebar.slider('Number of peaks used for integration', 0, 20, 6)
-    central_peak = st.sidebar.number_input('Central peak', 0, len(data), ct_peak)
-    peak_width = st.sidebar.number_input('Peak width', 0, pk_sep, pk_width)
-    peak_sep = st.sidebar.number_input('Peak separation', 0, len(data), pk_sep)
+    return peaks, data_pk, ct_peak, pk_sep, pk_width
 
-    HOM, errHOM = get_HOM_1input(data, peak_width, peak_sep, central_peak, num_peaks, baseline=True)
+@st.cache(allow_output_mutation=True)
+def get_vhom(data, peak_width, peak_sep, central_peak, num_peaks):
+    return get_HOM_1input(data, peak_width, peak_sep, central_peak, num_peaks)
+
+    # Uploading data (in .txt or .dat format only). You can also drag and drop.
+    file = st.file_uploader('Load data', type={"txt", "dat"}, help='Upload your data here')
+
+    col1, col2, col3, col4 = st.columns(4)
+
+    if file is not None:
+        # Select which TimeTagger is used
+        with col1:
+            timetagger = st.radio("Select correlator", ('Swabian', 'HydraHarp', 'Custom dataset'))
+        # Get the histogram from the data file depending on which correlator was used.
+        if timetagger == 'Swabian':
+            # The data has been saved using:
+            # np.savetxt(file.txt, [index, hist])
+            # we only use the hist
+            data = np.loadtxt(file)[1]
+        if timetagger == 'HydraHarp':
+            with col2:
+                # Channel used with the HydraHarp (starts at 0).
+                use_channel = st.number_input('Use channel:', value=0)
+            # For file extracted in ASCII from Picoquant software there are 10 lines of information that we skip.
+            data = np.loadtxt(file, skiprows=10)[:, use_channel]
+        if timetagger == 'Custom dataset':
+            with col2:
+                structure_data = st.radio("Data is stored in:", ('List', 'Lines', 'Columns'))
+            if structure_data == 'List':
+                data = np.loadtxt(file)
+            if structure_data == 'Lines':
+                with col3:
+                    use_line = st.number_input('Use line:', value=0)
+                data = np.loadtxt(file)[use_line]
+            if structure_data == 'Columns':
+                with col3:
+                    use_col = st.number_input('Use column:', value=0)
+                with col4:
+                    skip = st.number_input('Skip rows:', value=0)
+                data = np.loadtxt(file, skiprows=skip)[:, use_col]
+
+        # Create time axis to plot
+        time = (np.arange(0, len(data)))
+
+        peaks, data_pk, ct_peak, pk_sep, pk_width = find_sidepeaks(data)
+
+        # Creating widget for the app. Here we put them in a sidebar.
+        # Position of the time stamp of the central peak (zero delay) of the histogram
+        # Number of side peaks used to normalise the central peak and get the g2
+        num_peaks = st.sidebar.slider('Number of peaks used for integration', 0, 20, 6)
+        central_peak = st.sidebar.number_input('Central peak', 0, len(data), ct_peak)
+        peak_width = st.sidebar.number_input('Peak width', 0, pk_sep, pk_width)
+        peak_sep = st.sidebar.number_input('Peak separation', 0, len(data), pk_sep)
+
+    HOM, errHOM = get_vhom(data, peak_width, peak_sep, central_peak, num_peaks)
 
     zoom = st.sidebar.slider('Zoom out [number of peaks displayed]', 1, 20, 3)
 
+    # PLot it
     title_fig = 'HOM =' + str(round(HOM, 4)) + '±' + str(round(errHOM, 4))
     layout = Layout(
         plot_bgcolor='whitesmoke'
