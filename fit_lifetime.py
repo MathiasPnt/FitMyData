@@ -19,6 +19,7 @@ import streamlit as st
 from lmfit import Model
 import plotly.graph_objects as go
 from plotly.graph_objs import *
+from scipy.signal import find_peaks
 
 # Some constants used to get the FSS in eV
 hbar = scipy.constants.hbar
@@ -56,17 +57,31 @@ if file is not None:
 
     # This is how you add womething to one column.
     with col1:
-        Use_column = st.number_input('Use channel Nº', value = 0)
+        use_column = st.number_input('Use channel Nº', value = 0)
 
     # For file extracted in ASCII from Picoquant software there are 10 lines of information that we skip.
-    data = np.loadtxt(file,skiprows=10)[:, Use_column]
+    data = np.loadtxt(file,skiprows=10)[:, use_column]
+
+    # Peak finder
+    # peaks is a list of the index of all peaks with a certain prominence and width
+    peaks, properties = find_peaks(data, prominence=np.max(data) / 2, width=4, distance=50)
+
+    # histogram with only the peaks
+    data_pk = data[peaks]
+
+    to_delete = np.where(data_pk < max(data_pk) / 100)
+    data_pk = np.delete(data_pk, to_delete)
+    peaks = np.delete(peaks, to_delete)
+
+    first_peak = peaks[0]
 
     ## Sidebar widgets
 
     # Start and stop in [ns]
     # We will fit between start and stop only. These parameters influence the fit a lot.
-    start = st.sidebar.number_input('Start [ns]', 0.0, len(data)*0.004, 9.0)
-    stop = st.sidebar.number_input('Stop [ns]', 0.0, len(data)*0.004, 12.0)
+    # Start at the first peak, stop 0.5 ns later.
+    start = st.sidebar.number_input('Start [ns]', 0.0, len(data)*0.004, first_peak*0.004)
+    stop = st.sidebar.number_input('Stop [ns]', 0.0, len(data)*0.004, first_peak*0.004+1)
 
     # We go back to time bin for the fit.
     data_fit = data[int(start/0.004):int(stop/0.004)]
@@ -94,6 +109,7 @@ if file is not None:
 
     if fit_details and excitonic_particle == 'Exciton':
         w_ = st.sidebar.slider('FSS', 0, 10, 4)
+
 
     # Fit
     # !!! Resolution is 4 ps. X axis is in ns !!!
@@ -125,7 +141,13 @@ if file is not None:
             marker=dict(color='darkcyan', size=6),
             line=dict(color='darkcyan', width=2)
         ))
-
+        fig.add_trace(go.Scatter(
+            x=peaks*0.004,
+            y=data_pk,
+            name="Peaks",
+            mode='markers',
+            marker=dict(color='yellow', size=10),
+        ))
         fig.add_trace(go.Scatter(
             x=X_fit+start,
             y=Y_fit,
@@ -137,6 +159,11 @@ if file is not None:
 
     else:
         fit_T = fit_lifetime_T(data_fit)
+
+        # Show fit report
+        show_report = st.sidebar.checkbox('Show fit parameters')
+        if show_report:
+            st.write(fit_T .fit_report())
 
         # gets the y value of the fit
         Y_fit = fit_T.best_fit
@@ -151,7 +178,13 @@ if file is not None:
             marker=dict(color='darkcyan', size=6),
             line=dict(color='darkcyan', width=2)
         ))
-
+        fig.add_trace(go.Scatter(
+            x=peaks*0.004,
+            y=data_pk,
+            name="Peaks",
+            mode='markers',
+            marker=dict(color='yellow', size=10),
+        ))
         fig.add_trace(go.Scatter(
             x=X_fit + start,
             y=Y_fit,
@@ -186,4 +219,9 @@ if file is not None:
         fig.update_layout(yaxis=dict(tickformat=".1r"))
 
     st.plotly_chart(fig)
+
+    # Show fit report
+    show_report = st.sidebar.checkbox('Show fit report')
+    if show_report:
+        st.write(fit_X.fit_report())
 

@@ -15,23 +15,10 @@ import streamlit as st
 from HOM_Toolbox import get_g2_1input
 import plotly.graph_objects as go
 from plotly.graph_objs import *
+from scipy.signal import find_peaks, peak_widths
 
-# Depending on the resolution used during acquisition the values used to get the integraded value of the central
-# peak and peak size varies.
-def get_resolution(resolution):
 
-    # This is the values for 128 ps. For other resolution we simply use this as a ref
-    central_peak = 777  # index of central peak
-    bin_width = 22  # width of each peak
-    peak_sep = 96  # separation between peaks. If resolution of hydraharp is 128ps this should be 96
-    num_peaks = 8  # Number of peaks either side of central peak that will be used
-
-    return (128 / resolution) * central_peak, \
-           (128 / resolution) * bin_width, \
-           (128 / resolution) * peak_sep, \
-           (128 / resolution) * num_peaks
-
-col1, col2, col3= st.columns(3)
+col1, col2 = st.columns(2)
 with col1:
     # Select which TimeTagger is used
     timetagger = st.radio("Select correlator", ('Swabian', 'HydraHarp'))
@@ -40,43 +27,61 @@ with col1:
 file = st.file_uploader('Load data', type={"txt", "dat"})
 
 if file is not None:
-
+    # Get the histogram from the data file depending on which correlator was used.
     if timetagger=='Swabian':
         # The data has been saved using:
         # np.savetxt(file.txt, [index, hist])
         # we only use the hist
         data = np.loadtxt(file)[1]
-        # Position of the time stamp of the central peak (zero delay) of the histogram
-        central_peak = st.sidebar.number_input('Central peak', 12400, 12600, 12500)
-        # Width of the peak
-        peak_width = st.sidebar.slider('Peak width', 0, 50, 25)
-        # Separation between the peak [time stamp]
-        peak_sep = st.sidebar.number_input('Peak sep', 180, 200, 190)
-        # Number of side peaks used to normalise the central peak and get the g2
-        num_peaks = st.sidebar.slider('Number of peaks', 0, 20, 10)
-        # Create time axis to plot
-        time = (np.arange(0, 25000))
     else:
         with col2:
             # Channel used with the HydraHarp (starts at 0).
             use_channel = st.number_input('Use channel Nº', value=0)
-        with col3:
-            # Resolution used in [ps]
-            resolution = st.selectbox('Resolution [ps]?', ('128', '64', '32', '16', '4'))
 
         # For file extracted in ASCII from Picoquant software there are 10 lines of information that we skip.
         data = np.loadtxt(file, skiprows=10)[:, use_channel]
 
-        # Initial values that will then be finely adjusted by the user
-        central_peak0, peak_width0, peak_sep0, num_peaks0 = get_resolution(int(resolution))
+    # Create time axis to plot
+    time = (np.arange(0, len(data)))
 
-        # Creating widget for the app. Here we put them in a sidebar.
-        central_peak = st.sidebar.number_input('Central peak', 0, 65536, int(central_peak0))
-        peak_width = st.sidebar.slider('Peak width', 0, 100, int(peak_width0))
-        peak_sep = st.sidebar.number_input('Peak sep', 0, 65536, int(peak_sep0))
-        num_peaks = st.sidebar.slider('Number of peaks', 0, 20, int(num_peaks0))
-        # Create time axis to plot
-        time = (np.arange(0, 65536))
+    # Peak finder
+    # peaks is a list of the index of all peaks with a certain prominence and width
+    peaks, properties = find_peaks(data, prominence=np.max(data)/2, width=4, distance=50)
+
+    # histogram with only the side peaks
+    data_pk = data[peaks]
+
+    to_delete = np.where(data_pk < max(data_pk)/2)
+    data_pk = np.delete(data_pk, to_delete)
+    peaks = np.delete(peaks, to_delete)
+
+    results_full = peak_widths(data, peaks, rel_height=0.99)
+    pk_width = int(np.mean(results_full[0])) # widths
+
+
+    # get all peak separation
+    p_sep = []
+    for i in range(len(peaks)-1):
+        to_add = peaks[i+1]-peaks[i]
+        p_sep = p_sep + [to_add]
+
+    # delete the separation that corresponds to the central peak
+    # to_delete is then also the index of the first "side peak" in peaks.
+    to_delete = np.where(p_sep > np.mean(p_sep)+np.std(p_sep)/2)
+    p_sep = np.delete(p_sep, to_delete)
+
+    # Use the mean value as peak separation
+    pk_sep = int(np.mean(p_sep))
+    ct_peak = int(peaks[to_delete]+pk_sep)
+
+    # Creating widget for the app. Here we put them in a sidebar.
+    # Position of the time stamp of the central peak (zero delay) of the histogram
+    # Number of side peaks used to normalise the central peak and get the g2
+    num_peaks = st.sidebar.slider('Number of peaks used for integration', 0, 20, 6)
+    central_peak = st.sidebar.number_input('Central peak', 0, len(data), ct_peak)
+    peak_width = st.sidebar.number_input('Peak width', 0, pk_sep, pk_width)
+    peak_sep = st.sidebar.number_input('Peak separation', 0, len(data), pk_sep)
+
 
     # This function is described in HOM_Toolbox.py
     g2, errg2 = get_g2_1input(data, peak_width, peak_sep, central_peak, num_peaks, baseline=True)
@@ -99,17 +104,24 @@ if file is not None:
         line=dict(color='teal', width=2)
     ))
     fig2.add_trace(go.Scatter(
+        x=peaks,
+        y=data_pk,
+        name="Peaks",
+        mode='markers',
+        marker=dict(color='yellow', size=10),
+    ))
+    fig2.add_trace(go.Scatter(
         x=time[int(central_peak - peak_sep - peak_width / 2):int(central_peak - peak_sep + peak_width / 2)],
         y=data[int(central_peak - peak_sep - peak_width / 2):int(central_peak - peak_sep + peak_width / 2)],
-        name="Fit of side peak",
-        line=dict(color='gold', width=2, dash = 'dash')
+        name="Side peaks",
+        line=dict(color='gold', width=1)
     ))
 
     fig2.add_trace(go.Scatter(
         x=time[int(central_peak - peak_width / 2):int(central_peak + peak_width / 2)],
         y=data[int(central_peak - peak_width / 2):int(central_peak + peak_width / 2)],
-        name="Fit of central peak",
-        line=dict(color='gold', width=2)
+        name="Central peaks",
+        line=dict(color='gold', width=1)
     ))
     fig2.update_layout(title=title_fig,
                     title_font_size=20,
@@ -122,4 +134,6 @@ if file is not None:
                     xaxis=dict(tickformat="000"),
                     yaxis=dict(tickformat="000")
                        )
+    fig2.add_vline(x=central_peak, line_width=1, line_dash="dash", line_color="seagreen")
+
     st.plotly_chart(fig2)
