@@ -57,7 +57,7 @@ if file is not None:
 
     # This is how you add womething to one column.
     with col1:
-        use_column = st.number_input('Use channel Nº', value = 0)
+        use_column = st.number_input('Use channel:', value = 0)
 
     # For file extracted in ASCII from Picoquant software there are 10 lines of information that we skip.
     data = np.loadtxt(file,skiprows=10)[:, use_column]
