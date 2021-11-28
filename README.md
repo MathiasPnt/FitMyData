@@ -1,4 +1,7 @@
 # FitMyData
+
+To cite this work, see CITATION.cff
+
 Efficient and versatile toolbox for analysis of time-tagged measurements (g2 and HOM), micro-cavities (reflectivity spectrum) and emission (PL). 
 
 The objective is to have a tool to quickly analyse data in the lab. It is not meant to cover all possible possibilities, but we would like this software to be as general as possible. 
