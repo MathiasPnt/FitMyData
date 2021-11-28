@@ -21,6 +21,7 @@ from scipy.signal import find_peaks
 import streamlit as st
 import plotly.graph_objects as go
 from plotly.graph_objs import *
+import scipy.constants
 
 # Data must be in a .txt file with 2 columns:
 # column 1 = x abscisse in px
@@ -124,10 +125,14 @@ if file is not None:
 
     FWHM = 2*sigma
 
-    w = round(FWHM * 1e6, 2)
-    xc = round(xc, 6)
+    # Get pulse duration from width (transform-limited)
+    # We define TBP_gauss = ∆nu*∆tau
+    c0 = scipy.constants.c
+    delta_nu = c0*FWHM/xc**2
+    TBP_gauss = 2*np.log(2)/np.pi
+    delta_tau = TBP_gauss/delta_nu
 
-    title_fig = "xc = " + str(round(xc, 5)) + "eV | κ = " + str(FWHM) + " µeV"
+    title_fig = "xc = " + str(round(xc, 5)) + "eV | κ = " + str(round(FWHM * 1e6, 2)) + " µeV"
     layout = Layout(
         plot_bgcolor='whitesmoke'
     )

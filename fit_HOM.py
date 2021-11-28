@@ -66,9 +66,6 @@ if file is not None:
         timetagger = st.radio("Select correlator", ('Swabian', 'HydraHarp', 'Custom dataset'))
     # Get the histogram from the data file depending on which correlator was used.
     if timetagger == 'Swabian':
-        # The data has been saved using:
-        # np.savetxt(file.txt, [index, hist])
-        # we only use the hist
         data = np.loadtxt(file)[1]
     if timetagger == 'HydraHarp':
         with col2:
@@ -134,13 +131,13 @@ if file is not None:
         x=time[int(central_peak - peak_sep - peak_width / 2):int(central_peak - peak_sep + peak_width / 2)],
         y=data[int(central_peak - peak_sep - peak_width / 2):int(central_peak - peak_sep + peak_width / 2)],
         name="Side peak",
-        line=dict(color='gold', width=2, dash='dash')
+        line=dict(color='gold', width=1)
     ))
     fig2.add_trace(go.Scatter(
         x=time[int(central_peak - peak_width / 2):int(central_peak + peak_width / 2)],
         y=data[int(central_peak - peak_width / 2):int(central_peak + peak_width / 2)],
         name="Central peak",
-        line=dict(color='gold', width=2)
+        line=dict(color='gold', width=1)
     ))
     fig2.update_layout(title=title_fig,
                        title_font_size=20,

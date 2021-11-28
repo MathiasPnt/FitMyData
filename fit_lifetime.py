@@ -160,11 +160,6 @@ if file is not None:
     else:
         fit_T = fit_lifetime_T(data_fit)
 
-        # Show fit report
-        show_report = st.sidebar.checkbox('Show fit parameters')
-        if show_report:
-            st.write(fit_T .fit_report())
-
         # gets the y value of the fit
         Y_fit = fit_T.best_fit
         # Lifetime
@@ -222,6 +217,8 @@ if file is not None:
 
     # Show fit report
     show_report = st.sidebar.checkbox('Show fit report')
-    if show_report:
-        st.write(fit_X.fit_report())
+    if show_report and excitonic_particle == 'Trion':
+        st.write(fit_T.fit_report())
+    if show_report and excitonic_particle == 'Exciton':
+        st.write(fit_X .fit_report())
 
