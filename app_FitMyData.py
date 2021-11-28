@@ -22,7 +22,7 @@ To add a functionality:
 import streamlit as st
 from PIL import Image
 
-choose_functionality = st.selectbox('What are we fitting today?',
+choose_functionality = st.selectbox('What are we fiting today?',
                                     ('Select an option',
                                      'Lifetime',
                                      'HOM',
