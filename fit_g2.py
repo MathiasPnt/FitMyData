@@ -19,6 +19,7 @@ from scipy.signal import find_peaks, peak_widths
 
 @st.cache(suppress_st_warning=True)
 def find_sidepeaks(data):
+
     # Peak finder
     # peaks is a list of the index of all peaks with a certain prominence and width
     peaks, properties = find_peaks(data, prominence=np.max(data) / 2, width=4, distance=50)

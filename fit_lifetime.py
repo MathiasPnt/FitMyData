@@ -12,8 +12,6 @@ Output: Displays a graph and gives the lifetime (in ps) and FSS (in eV).
 """
 
 import numpy as np
-import matplotlib.pyplot as plt
-import seaborn as sns
 import scipy
 import streamlit as st
 from lmfit import Model
