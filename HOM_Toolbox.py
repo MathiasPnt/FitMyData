@@ -5,7 +5,7 @@
 
 import numpy as np
 
-def get_g2_1input(dat_g2, peak_width, peak_sep, central_peak, num_peaks, avoid1peak = False, baseline = True):
+def get_g2_1input(dat_g2, peak_width, peak_sep, central_peak, num_peaks, baseline = True):
 
     bg_1 = np.zeros(num_peaks)
     bg_2 = np.zeros(num_peaks)
@@ -13,31 +13,33 @@ def get_g2_1input(dat_g2, peak_width, peak_sep, central_peak, num_peaks, avoid1p
     p1 = np.zeros(num_peaks)
     p2 = np.zeros(num_peaks)
 
-    cent = np.sum(dat_g2[int(central_peak - peak_width / 2):int(central_peak + peak_width / 2)])
-    err_cent = np.sqrt(cent)
 
-    for k in range(1, num_peaks):
-        bg_1[k] = np.mean(dat_g2[int(central_peak+k*peak_sep+ 2*peak_width):int(central_peak+(k+1)*peak_sep - peak_width/2)])
-        bg_2[k] = np.mean(dat_g2[int(central_peak-(k+1)*peak_sep+ 2*peak_width/2):int(central_peak-(k)*peak_sep - peak_width/2)])
+    for k in range(1, num_peaks + 1):
+        bg_1[k - 1] = np.mean(dat_g2[int(central_peak + k * peak_sep + 2 * peak_width):
+                                     int(central_peak + (k + 1) * peak_sep - 2 * peak_width)])
+        bg_2[k - 1] = np.mean(dat_g2[int(central_peak - (k + 1) * peak_sep + 2 * peak_width):
+                                     int(central_peak- k * peak_sep - 2 * peak_width)])
 
     if baseline:
         bg = np.mean([bg_1, bg_2])
     else:
         bg = 0
 
-    if avoid1peak:
-        start = 1
-    else:
-        start = 0
+    cent = np.sum(dat_g2[int(central_peak - peak_width / 2):int(central_peak + peak_width / 2)])- bg * (peak_width)
+    err_cent = np.sqrt(cent)
 
     ct = 0
-    for k in range(start, num_peaks):
-        p1[k - 1] = np.sum(dat_g2[int(central_peak - k * peak_sep - peak_width / 2):int(central_peak - k * peak_sep + peak_width / 2)]) - bg * (peak_width)
-        p2[k - 1] = np.sum(dat_g2[int(central_peak + k * peak_sep - peak_width / 2):int(central_peak + k * peak_sep + peak_width / 2)]) - bg * (peak_width)
+    for k in range(1, num_peaks + 1):
+        p1[k - 1] = np.sum(dat_g2[int(central_peak - k * peak_sep - peak_width / 2):
+                                  int(central_peak - k * peak_sep + peak_width / 2)]) - bg * (peak_width)
+        p2[k - 1] = np.sum(dat_g2[int(central_peak + k * peak_sep - peak_width / 2):
+                                  int(central_peak + k * peak_sep + peak_width / 2)]) - bg * (peak_width)
         ct = ct + 1
 
     peak = ((np.sum(p1) + np.sum(p2)) / 2 )/ ct
     err_peak = np.sqrt(peak)
+
+    print(bg*peak_width, peak, cent, ct)
 
     g2 = cent / peak
     err_g2 = g2 * np.sqrt((err_cent / cent) ** 2 + (err_peak / peak) ** 2)
@@ -45,7 +47,7 @@ def get_g2_1input(dat_g2, peak_width, peak_sep, central_peak, num_peaks, avoid1p
     return [g2, err_g2]
 
 
-def get_HOM_1input(dat_HOM, peak_width, peak_sep, central_peak, num_peaks, avoid1peak = False, baseline = False):
+def get_HOM_1input(dat_HOM, peak_width, peak_sep, central_peak, num_peaks, baseline = False):
 
     bg_1 = np.zeros(num_peaks)
     bg_2 = np.zeros(num_peaks)
@@ -53,29 +55,28 @@ def get_HOM_1input(dat_HOM, peak_width, peak_sep, central_peak, num_peaks, avoid
     p3 = np.zeros(num_peaks)
     p4 = np.zeros(num_peaks)
 
-
     if baseline:
-        for k in range(1, num_peaks):
-            bg_1[k] = np.mean(dat_HOM[int(central_peak + k * peak_sep + 2 * peak_width):int(central_peak + (k + 1) * peak_sep - 2 * peak_width)])
-            bg_2[k] = np.mean(dat_HOM[int(central_peak - (k + 1) * peak_sep + 2 * peak_width): int(central_peak - (k) * peak_sep - 2 * peak_width)])
+        for k in range(1, num_peaks + 1):
+            bg_1[k - 1] = np.mean(dat_HOM[int(central_peak + k * peak_sep + 2 * peak_width):
+                                          int(central_peak + (k + 1) * peak_sep - 2 * peak_width)])
+
+            bg_2[k - 1] = np.mean(dat_HOM[int(central_peak - (k + 1) * peak_sep + 2 * peak_width):
+                                          int(central_peak - k * peak_sep - 2 * peak_width)])
         bg = np.mean([bg_1, bg_2])
     else:
         bg = 0
 
-    if avoid1peak:
-        start = 1
-    else:
-        start = 0
-
-    cent = np.sum(dat_HOM[int(central_peak - peak_width / 2):int(central_peak + peak_width / 2)]-bg)
+    cent = np.sum(dat_HOM[int(central_peak - peak_width / 2):
+                          int(central_peak + peak_width / 2)]-bg*peak_width)
     err_cent = np.sqrt(cent)
 
     ct = 0
-    for k in range(start, num_peaks):
-        p3[k - 1] = np.sum(dat_HOM[int(central_peak - (k + 1) * peak_sep - peak_width / 2):int(
-            central_peak - (k + 1) * peak_sep + peak_width / 2)]-bg)
-        p4[k - 1] = np.sum(dat_HOM[int(central_peak + (k + 1) * peak_sep - peak_width / 2):int(
-            central_peak + (k + 1) * peak_sep + peak_width / 2)]-bg)
+    for k in range(1, num_peaks+1):
+        p3[k-1] = np.sum(dat_HOM[int(central_peak - (k + 1) * peak_sep - peak_width / 2):
+                                 int(central_peak - (k + 1) * peak_sep + peak_width / 2)]-bg*peak_width)
+
+        p4[k-1] = np.sum(dat_HOM[int(central_peak + (k + 1) * peak_sep - peak_width / 2):
+                                 int(central_peak + (k + 1) * peak_sep + peak_width / 2)]-bg*peak_width)
         ct = ct + 1
 
     peak = ((np.sum(p3) + np.sum(p4)) / 2) / ct
@@ -87,24 +88,26 @@ def get_HOM_1input(dat_HOM, peak_width, peak_sep, central_peak, num_peaks, avoid
     return [V, err_V]
 
 
-def get_HOM_2input(HOM_ortho, HOM_para, peak_width, peak_sep, central_peak, num_peaks, avoid1peak = False):
+def get_HOM_2input(HOM_ortho, HOM_para, peak_width, peak_sep, central_peak, num_peaks):
 
     p1 = np.zeros(num_peaks)
     p2 = np.zeros(num_peaks)
     p3 = np.zeros(num_peaks)
     p4 = np.zeros(num_peaks)
 
-    if avoid1peak:
-        start = 1
-    else:
-        start = 0
-
     ct = 0
-    for k in range(start, num_peaks):
-        p1[k - 1] = np.sum(HOM_para[int(central_peak - k * peak_sep - peak_width / 2):int(central_peak - k * peak_sep + peak_width / 2)])
-        p2[k - 1] = np.sum(HOM_para[int(central_peak + k * peak_sep - peak_width / 2):int(central_peak + k * peak_sep + peak_width / 2)])
-        p3[k - 1] = np.sum(HOM_ortho[int(central_peak - k * peak_sep - peak_width / 2):int(central_peak - k * peak_sep + peak_width / 2)])
-        p4[k - 1] = np.sum(HOM_ortho[int(central_peak + k * peak_sep - peak_width / 2):int(central_peak + k * peak_sep + peak_width / 2)])
+    for k in range(1, num_peaks+1):
+        p1[k - 1] = np.sum(HOM_para[int(central_peak - k * peak_sep - peak_width / 2):
+                                    int(central_peak - k * peak_sep + peak_width / 2)])
+
+        p2[k - 1] = np.sum(HOM_para[int(central_peak + k * peak_sep - peak_width / 2):
+                                    int(central_peak + k * peak_sep + peak_width / 2)])
+
+        p3[k - 1] = np.sum(HOM_ortho[int(central_peak - k * peak_sep - peak_width / 2):
+                                     int(central_peak - k * peak_sep + peak_width / 2)])
+
+        p4[k - 1] = np.sum(HOM_ortho[int(central_peak + k * peak_sep - peak_width / 2):
+                                     int(central_peak + k * peak_sep + peak_width / 2)])
         ct = ct + 1
     peak_para = (np.sum(p1) + np.sum(p2)) / 2 / ct
     peak_ortho = (np.sum(p3) + np.sum(p4)) / 2 / ct

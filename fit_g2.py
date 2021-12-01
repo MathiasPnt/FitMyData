@@ -48,7 +48,8 @@ def find_sidepeaks(data):
     # Use the mean value and int
     pk_width = int(np.mean(results_full[0]))  # widths
     pk_sep = int(np.mean(p_sep))
-    ct_peak = int(peaks[to_delete] + pk_sep)
+    # WE ONLY USE THE FIST OCCURENCE OF A 2 PEAK SEPARATION TO GET THE CENTER PX
+    ct_peak = int(peaks[to_delete][0] + pk_sep)
 
     return peaks, data_pk, ct_peak, pk_sep, pk_width
 
@@ -63,9 +64,14 @@ file = st.file_uploader('Load data', type={"txt", "dat"}, help = 'Upload your da
 col1, col2, col3, col4 = st.columns(4)
 
 if file is not None:
+    ext = file.name[-3:]
     # Select which TimeTagger is used
     with col1:
-        timetagger = st.radio("Select correlator", ('Swabian', 'HydraHarp', 'Custom dataset'))
+        if ext == 'txt':
+            timetagger = st.radio("Select correlator", ('Swabian', 'HydraHarp', 'Custom dataset'), index=0, key='sw')
+        if ext == 'dat':
+            timetagger = st.radio("Select correlator", ('Swabian', 'HydraHarp', 'Custom dataset'), index=1, key='hyd')
+
     # Get the histogram from the data file depending on which correlator was used.
     if timetagger=='Swabian':
         # The data has been saved using:
@@ -110,7 +116,7 @@ if file is not None:
     g2, errg2 = get_g2(data, peak_width, peak_sep, central_peak, num_peaks)
 
     # Zoom out to see more peaks in the plot
-    zoom = st.sidebar.slider('Zoom out [number of peaks displayed]', 1, 20, 3)
+    zoom = st.sidebar.slider('Zoom out [number of peaks displayed]', 1, 20, num_peaks + 1)
 
 
     # Create an interactive plotly plot. No more comments needed here.
@@ -133,12 +139,42 @@ if file is not None:
         mode='markers',
         marker=dict(color='yellow', size=10),
     ))
-    fig2.add_trace(go.Scatter(
-        x=time[int(central_peak - peak_sep - peak_width / 2):int(central_peak - peak_sep + peak_width / 2)],
-        y=data[int(central_peak - peak_sep - peak_width / 2):int(central_peak - peak_sep + peak_width / 2)],
-        name="Side peaks",
-        line=dict(color='gold', width=1)
-    ))
+    # Side peaks left
+    for k in range(1, num_peaks+1):
+        fig2.add_trace(go.Scatter(
+            x=time[int(central_peak - k * peak_sep - peak_width / 2):
+                   int(central_peak - k * peak_sep + peak_width / 2)],
+            y=data[int(central_peak - k * peak_sep - peak_width / 2):
+                   int(central_peak - k * peak_sep + peak_width / 2)],
+            showlegend=False,
+            line=dict(color='gold', width=1)
+        ))
+    # Side right
+    for k in range(1, num_peaks+1):
+        fig2.add_trace(go.Scatter(
+            x=time[int(central_peak + k * peak_sep - peak_width / 2):
+                   int(central_peak + k * peak_sep + peak_width / 2)],
+            y=data[int(central_peak + k * peak_sep - peak_width / 2):
+                   int(central_peak + k * peak_sep + peak_width / 2)],
+            showlegend=False,
+            line=dict(color='gold', width=1)
+        ))
+    # Baseline right
+    for k in range(1, num_peaks+1):
+        fig2.add_trace(go.Scatter(
+            x=time[int(central_peak + k * peak_sep + 2 * peak_width):int(central_peak + (k + 1) * peak_sep - 2 * peak_width)],
+            y=data[int(central_peak + k * peak_sep + 2 * peak_width):int(central_peak + (k + 1) * peak_sep - 2 * peak_width)],
+            showlegend = False,
+            line=dict(color='red', width=1)
+        ))
+    # Baseline left
+    for k in range(1, num_peaks+1):
+        fig2.add_trace(go.Scatter(
+            x=time[int(central_peak-(k+1)*peak_sep+2*peak_width):int(central_peak-(k)*peak_sep-2*peak_width)],
+            y=data[int(central_peak-(k+1)*peak_sep+2*peak_width):int(central_peak-(k)*peak_sep - 2*peak_width)],
+            showlegend = False,
+            line=dict(color='red', width=1)
+        ))
 
     fig2.add_trace(go.Scatter(
         x=time[int(central_peak - peak_width / 2):int(central_peak + peak_width / 2)],
