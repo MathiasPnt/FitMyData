@@ -12,7 +12,7 @@ Output: Displays a graph and gives the raw V_HOM ± statistical error.
 
 import numpy as np
 import streamlit as st
-from HOM_Toolbox import get_HOM_1input
+from HOM_toolbox import get_HOM_1input
 import plotly.graph_objects as go
 from plotly.graph_objs import *
 from scipy.signal import find_peaks, peak_widths
