@@ -15,8 +15,7 @@ import numpy as np
 import scipy
 import streamlit as st
 from lmfit import Model
-import plotly.graph_objects as go
-from plotly.graph_objs import *
+import matplotlib.pyplot as plt
 from scipy.signal import find_peaks
 
 # Some constants used to get the FSS in eV
@@ -114,11 +113,11 @@ if file is not None:
     X_fit = 0.004*np.arange(0,len(data_fit))
     X = 0.004*np.arange(0,len(data))
 
+    fig, ax = plt.subplots()
+    ax.tick_params(direction='in', bottom=True, top=True, left=True, right=True, labelsize=12)
+
 
     # Create an interactive plotly plot. No more comments needed here.
-    layout = Layout(plot_bgcolor='whitesmoke'
-                    )
-    fig = go.Figure(layout=layout)
 
     if excitonic_particle == 'Exciton':
 
@@ -131,30 +130,14 @@ if file is not None:
         # pulsation of the oscillations
         w =  fit_X.params['w'].value
 
-        fig.add_trace(go.Scatter(
-            x=X,
-            y=data,
-            name="Data",
-            mode='lines+markers',
-            marker=dict(color='darkcyan', size=6),
-            line=dict(color='darkcyan', width=2)
-        ))
-        fig.add_trace(go.Scatter(
-            x=peaks*0.004,
-            y=data_pk,
-            name="Peaks",
-            mode='markers',
-            marker=dict(color='yellow', size=10),
-        ))
-        fig.add_trace(go.Scatter(
-            x=X_fit+start,
-            y=Y_fit,
-            name="Fit",
-            line=dict(color='gold', width=2)
-        ))
+        ax.plot(X, data, '-o', markersize = 3, label="Data")
+
+        ax.plot(peaks*0.004, data_pk, 'o', label="Peaks")
+
+        ax.plot(X_fit+start, Y_fit, label="Fit")
 
         title_fig = 'Lifetime = ' + str(round(tau * 1000, 2)) + ' ps, FSS = ' + str(round(1e9 * w * 2 * hbar / eV, 9)) + ' eV'
-
+        ax.set_title(title_fig)
     else:
         fit_T = fit_lifetime_T(data_fit)
 
@@ -163,55 +146,26 @@ if file is not None:
         # Lifetime
         tau = fit_T.params['tau'].value
 
-        fig.add_trace(go.Scatter(
-            x=X,
-            y=data,
-            name="Data",
-            mode='lines+markers',
-            marker=dict(color='darkcyan', size=6),
-            line=dict(color='darkcyan', width=2)
-        ))
-        fig.add_trace(go.Scatter(
-            x=peaks*0.004,
-            y=data_pk,
-            name="Peaks",
-            mode='markers',
-            marker=dict(color='yellow', size=10),
-        ))
-        fig.add_trace(go.Scatter(
-            x=X_fit + start,
-            y=Y_fit,
-            name="Fit",
-            line=dict(color='gold', width=2)
-        ))
+        ax.plot(X, data, '-o', markersize = 3, label="Data")
+
+        ax.plot(peaks * 0.004, data_pk, 'o', label="Peaks")
+
+        ax.plot(X_fit + start, Y_fit, label="Fit")
 
         title_fig = 'Lifetime = ' + str(round(tau * 1000, 2)) + ' ps'
+        ax.set_title(title_fig)
 
     if zoom_in:
-        fig.update_layout(xaxis_range=[start-1, stop+1])
+       ax.set_xlim(start-1, stop+1)
 
     if log_scale:
-        fig.update_yaxes(type="log")
+        ax.set_yscale('log')
 
-    fig.add_vline(x=start, line_width=2, line_dash="dash", line_color="seagreen")
-    fig.add_vline(x=stop, line_width=2, line_dash="dash", line_color="firebrick")
+    ax.axvline(start, linestyle="--", color="seagreen")
+    ax.axvline(stop, linestyle="--", color="firebrick")
 
-    fig.update_layout(title=title_fig,
-                    title_font_size=20,
-                    width=800, height=500,
-                    margin=dict(l=40, r=40, b=40, t=40),
-                    xaxis_title="Time [ns]",
-                    yaxis_title="Counts",
-                    legend_title="Legend",
-                    xaxis=dict(tickformat="000"),
-                    yaxis=dict(tickformat="000")
-                       )
 
-    if log_scale:
-        fig.update_yaxes(type="log")
-        fig.update_layout(yaxis=dict(tickformat=".1r"))
-
-    st.plotly_chart(fig)
+    st.pyplot(fig)
 
     # Show fit report
     show_report = st.sidebar.checkbox('Show fit report')

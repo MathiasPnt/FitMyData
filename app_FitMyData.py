@@ -26,6 +26,7 @@ choose_functionality = st.selectbox('What are we fiting today?',
                                     ('Select an option',
                                      'Lifetime',
                                      'HOM',
+                                     '2HOM',
                                      'g2',
                                      'Reflectivity',
                                      "Photoluminescence",
@@ -38,6 +39,8 @@ if choose_functionality =='Lifetime':
     exec(open('fit_lifetime.py').read())
 if choose_functionality =='HOM':
     exec(open('fit_HOM.py').read())
+if choose_functionality == '2HOM':
+    exec(open('fit_2HOM.py').read())
 if choose_functionality =='g2':
     exec(open('fit_g2.py').read())
 if choose_functionality == 'Reflectivity':

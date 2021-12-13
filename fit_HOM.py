@@ -12,50 +12,9 @@ Output: Displays a graph and gives the raw V_HOM ± statistical error.
 
 import numpy as np
 import streamlit as st
-from HOM_toolbox import get_HOM_1input
-import plotly.graph_objects as go
-from plotly.graph_objs import *
-from scipy.signal import find_peaks, peak_widths
+from HOM_toolbox import get_HOM_1input, find_sidepeaks
+import matplotlib.pyplot as plt
 
-#@st.cache(suppress_st_warning=True)
-def find_sidepeaks(data):
-    # Peak finder
-    # peaks is a list of the index of all peaks with a certain prominence and width
-    peaks, properties = find_peaks(data, prominence=np.max(data) / 2, width=4, distance=50)
-
-    # histogram with only the side peaks
-    data_pk = data[peaks]
-
-    to_delete = np.where(data_pk < max(data_pk) / 2)
-    data_pk = np.delete(data_pk, to_delete)
-    peaks = np.delete(peaks, to_delete)
-
-    # Gets the width of the peaks. With 1 we take the full peak. 0.99 allows to get rid of the unwanted noise.
-    results_full = peak_widths(data, peaks, rel_height=0.99)
-
-    # get all peak separation
-    p_sep = []
-    for i in range(len(peaks) - 1):
-        to_add = peaks[i + 1] - peaks[i]
-        p_sep = p_sep + [to_add]
-
-    # delete the separation that corresponds to the central peak
-    # to_delete is then also the index of the first "side peak" in peaks.
-    to_delete = np.where(p_sep > np.mean(p_sep) + np.std(p_sep) / 2)
-    p_sep = np.delete(p_sep, to_delete)
-
-    # Use the mean value and int
-    pk_width = int(np.mean(results_full[0]))  # widths
-    pk_sep = int(np.mean(p_sep))
-    # WE ONLY USE THE FIST OCCURENCE OF A 2 PEAK SEPARATION TO GET THE CENTER PX
-    ct_peak = int(peaks[to_delete][0] + pk_sep)
-
-
-    return peaks, data_pk, ct_peak, pk_sep, pk_width
-
-@st.cache(allow_output_mutation=True)
-def get_vhom(data, peak_width, peak_sep, central_peak, num_peaks):
-    return get_HOM_1input(data, peak_width, peak_sep, central_peak, num_peaks)
 
 # Uploading data (in .txt or .dat format only). You can also drag and drop.
 file = st.file_uploader('Load data', type={"txt", "dat"}, help='Upload your data here')
@@ -108,85 +67,61 @@ if file is not None:
     central_peak = st.sidebar.number_input('Central peak', 0, len(data), ct_peak)
     peak_width = st.sidebar.number_input('Peak width', 0, pk_sep, pk_width)
     peak_sep = st.sidebar.number_input('Peak separation', 0, len(data), pk_sep)
+    base_line = st.sidebar.checkbox('Substract baseline', value = True)
 
-    HOM, errHOM = get_vhom(data, peak_width, peak_sep, central_peak, num_peaks)
+    HOM, errHOM = get_HOM_1input(data, peak_width, peak_sep, central_peak, num_peaks, baseline=base_line)
 
     zoom = st.sidebar.slider('Zoom out [number of peaks displayed]', 1, 20, num_peaks+1)
 
     # PLot it
+    fig, ax = plt.subplots()
     title_fig = 'HOM =' + str(round(HOM, 4)) + '±' + str(round(errHOM, 4))
-    layout = Layout(
-        plot_bgcolor='whitesmoke'
-    )
-    fig2 = go.Figure(layout=layout)
-    fig2.add_trace(go.Scatter(
-        x=time,
-        y=data,
-        name="Data",
-        mode='lines+markers',
-        marker=dict(color='darkcyan', size=6),
-        line=dict(color='teal', width=2)
-    ))
-    fig2.add_trace(go.Scatter(
-        x=peaks,
-        y=data_pk,
-        name="Peaks",
-        mode='markers',
-        marker=dict(color='yellow', size=10),
-    ))
+    ax.set_title(title_fig)
+    ax.plot(time, data, '-o', markersize = 3)
+    ax.plot(peaks, data_pk, 'o', markersize = 6, color = 'gold')
     # Side peaks left
-    for k in range(1, num_peaks):
-        fig2.add_trace(go.Scatter(
-            x=time[int(central_peak - (k + 1)*peak_sep - peak_width / 2):
-                   int(central_peak - (k + 1)*peak_sep + peak_width / 2)],
-            y=data[int(central_peak - (k + 1)*peak_sep - peak_width / 2):
-                   int(central_peak - (k + 1)*peak_sep + peak_width / 2)],
-            showlegend = False,
-            line=dict(color='gold', width=1)
-    ))
+    [ax.plot(time[int(central_peak - (k + 1) * peak_sep - peak_width / 2):
+                  int(central_peak - (k + 1) * peak_sep + peak_width / 2)],
+             data[int(central_peak - (k + 1) * peak_sep - peak_width / 2):
+                  int(central_peak - (k + 1) * peak_sep + peak_width / 2)],
+             color='gold') for k in range(1, num_peaks + 1)]
     # Side peaks right
-    for k in range(1, num_peaks):
-        fig2.add_trace(go.Scatter(
-            x=time[int(central_peak + (k + 1) * peak_sep - peak_width / 2):
-                   int(central_peak + (k + 1) * peak_sep + peak_width / 2)],
-            y=data[int(central_peak + (k + 1) * peak_sep - peak_width / 2):
-                   int(central_peak + (k + 1) * peak_sep + peak_width / 2)],
-            showlegend = False,
-            line=dict(color='gold', width=1)
-    ))
+    [ax.plot(time[int(central_peak + (k + 1) * peak_sep - peak_width / 2):
+                  int(central_peak + (k + 1) * peak_sep + peak_width / 2)],
+             data[int(central_peak + (k + 1) * peak_sep - peak_width / 2):
+                  int(central_peak + (k + 1) * peak_sep + peak_width / 2)],
+             color='gold') for k in range(1, num_peaks + 1)]
     # Center peak
-    fig2.add_trace(go.Scatter(
-        x=time[int(central_peak - peak_width / 2):int(central_peak + peak_width / 2)],
-        y=data[int(central_peak - peak_width / 2):int(central_peak + peak_width / 2)],
-        name="Integration window",
-        line=dict(color='gold', width=1)
-    ))
+    ax.plot(time[int(central_peak - peak_width / 2):int(central_peak + peak_width / 2)],
+            data[int(central_peak - peak_width / 2):int(central_peak + peak_width / 2)],
+            )
     # Baseline right
-    for k in range(1, num_peaks+1):
-        fig2.add_trace(go.Scatter(
-            x=time[int(central_peak + k * peak_sep + 2 * peak_width):int(central_peak + (k + 1) * peak_sep - 2 * peak_width)],
-            y=data[int(central_peak + k * peak_sep + 2 * peak_width):int(central_peak + (k + 1) * peak_sep - 2 * peak_width)],
-            showlegend = False,
-            line=dict(color='red', width=1)
-        ))
+    [ax.plot(time[int(central_peak + k * peak_sep + 2 * peak_width):
+                  int(central_peak + (k + 1) * peak_sep - 2 * peak_width)],
+             data[int(central_peak + k * peak_sep + 2 * peak_width):
+                  int(central_peak + (k + 1) * peak_sep - 2 * peak_width)],
+            color='red') for k in range(1, num_peaks + 1)]
+
     # Baseline left
-    for k in range(1, num_peaks+1):
-        fig2.add_trace(go.Scatter(
-            x=time[int(central_peak-(k+1)*peak_sep+2*peak_width):int(central_peak-(k)*peak_sep-2*peak_width)],
-            y=data[int(central_peak-(k+1)*peak_sep+2*peak_width):int(central_peak-(k)*peak_sep - 2*peak_width)],
-            showlegend = False,
-            line=dict(color='red', width=1)
-        ))
-    fig2.update_layout(title=title_fig,
-                       title_font_size=20,
-                       width=800, height=500,
-                       margin=dict(l=40, r=40, b=40, t=40),
-                       xaxis_title="Time [ns]",
-                       yaxis_title="Counts",
-                       legend_title="Legend",
-                       xaxis_range=[-zoom * peak_sep + central_peak, zoom * peak_sep + central_peak],
-                       xaxis=dict(tickformat="000"),
-                       yaxis=dict(tickformat="000")
-                       )
-    fig2.add_vline(x=central_peak, line_width=1, line_dash="dash", line_color="seagreen")
-    st.plotly_chart(fig2)
+    [ax.plot(time[int(central_peak - (k + 1) * peak_sep + 2 * peak_width):
+                  int(central_peak - k * peak_sep - 2 * peak_width)],
+             data[int(central_peak - (k + 1) * peak_sep + 2 * peak_width):
+                  int(central_peak - k * peak_sep - 2 * peak_width)],
+             color='red') for k in range(1, num_peaks + 1)]
+
+    ax.set_xlim(central_peak-(zoom+2)*peak_sep, central_peak+(zoom+2)*peak_sep)
+
+    check_central = st.sidebar.checkbox('Check central peak')
+    if check_central:
+        ax.set_xlim(central_peak - 2 * peak_width, central_peak + 2 * peak_width)
+        ax.set_ylim(0, 1.2*np.max(data[central_peak - 2 * peak_width:central_peak + 2 * peak_width]))
+
+    ax.axvline(central_peak, linestyle='--')
+    ax.axhline(np.mean(data[peaks]), linestyle='--', linewidth=1, color="dimgray")
+    ax.axhline(np.mean(data[peaks])/2, linestyle='--', linewidth=1, color="dimgray")
+
+    ax.set_xlabel("Timetag", fontsize=18)
+    ax.set_ylabel("Visibility", fontsize=18)
+    ax.tick_params(direction='in', bottom=True, top=True, left=True, right=True, labelsize=12)
+
+    st.pyplot(fig)
