@@ -14,6 +14,7 @@ import numpy as np
 import streamlit as st
 from HOM_toolbox import get_g2_1input, find_sidepeaks
 import matplotlib.pyplot as plt
+import os
 
 # Uploading data (in .txt or .dat format only). You can also drag and drop.
 file = st.file_uploader('Load data', type={"txt", "dat"}, help = 'Upload your data here')
@@ -130,3 +131,12 @@ if file is not None:
     ax.tick_params(direction='in', bottom=True, top=True, left=True, right=True, labelsize=12)
 
     st.pyplot(fig)
+
+    save_path = st.text_input('Save path location', value="/Users/mathias/Desktop")
+    if not len(save_path) == 0:
+        if not os.path.exists(save_path):
+            st.warning('This path is invalid')
+        else:
+            if st.button('Save fig'):
+                fig.savefig(save_path+os.sep+file.name[:-4]+".pdf", bbox_inches='tight')
+                st.success("Fig was saved to "+save_path+os.sep+file.name[:-4]+".pdf")

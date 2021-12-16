@@ -27,9 +27,9 @@ if file_ortho is not None:
     # Select which TimeTagger is used
     with col1:
         if ext == 'txt':
-            timetagger = st.radio("Select correlator", ('Swabian', 'HydraHarp', 'Custom dataset'), index=0, key='sw')
+            timetagger = st.radio("Select correlator ortho", ('Swabian', 'HydraHarp', 'Custom dataset'), index=0, key='sw')
         if ext == 'dat':
-            timetagger = st.radio("Select correlator", ('Swabian', 'HydraHarp', 'Custom dataset'), index=1, key='hyd')
+            timetagger = st.radio("Select correlator ortho", ('Swabian', 'HydraHarp', 'Custom dataset'), index=1, key='hyd')
 
     # Get the histogram from the data file depending on which correlator was used.
     if timetagger=='Swabian':
@@ -40,7 +40,7 @@ if file_ortho is not None:
     if timetagger == 'HydraHarp':
         with col2:
             # Channel used with the HydraHarp (starts at 0).
-            use_channel = st.number_input('Use channel:', value=0)
+            use_channel = st.number_input('Use channel:', value=0, key="ch_ortho")
         # For file extracted in ASCII from Picoquant software there are 10 lines of information that we skip.
         data_ortho = np.loadtxt(file_ortho, skiprows=10)[:, use_channel]
     if timetagger == 'Custom dataset':
@@ -65,10 +65,10 @@ if file_para is not None:
     # Select which TimeTagger is used
     with col5:
         if ext == 'txt':
-            timetagger = st.radio("Select correlator for dataset para",
+            timetagger = st.radio("Select correlator para",
                                   ('Swabian', 'HydraHarp', 'Custom dataset'), index=0, key='sw2')
         if ext == 'dat':
-            timetagger = st.radio("Select correlator for dataset para",
+            timetagger = st.radio("Select correlator para",
                                   ('Swabian', 'HydraHarp', 'Custom dataset'), index=1, key='hyd2')
 
     # Get the histogram from the data file depending on which correlator was used.
@@ -80,7 +80,7 @@ if file_para is not None:
     if timetagger == 'HydraHarp':
         with col6:
             # Channel used with the HydraHarp (starts at 0).
-            use_channel = st.number_input('Use channel:', value=0)
+            use_channel = st.number_input('Use channel:', value=0, key="ch_para")
         # For file extracted in ASCII from Picoquant software there are 10 lines of information that we skip.
         data_para = np.loadtxt(file_para, skiprows=10)[:, use_channel]
     if timetagger == 'Custom dataset':
@@ -106,15 +106,18 @@ if file_para and file_ortho is not None:
 
     peaks, data_pk, ct_peak, pk_sep, pk_width = find_sidepeaks(data_para)
 
+
     # Creating widget for the app. Here we put them in a sidebar.
     # Position of the time stamp of the central peak (zero delay) of the histogram
     # Number of side peaks used to normalise the central peak and get the g2
+
     num_peaks = st.sidebar.slider('Number of peaks used for integration', 0, 20, 6)
     central_peak = st.sidebar.number_input('Central peak', 0, len(data_para), ct_peak)
     peak_width = st.sidebar.number_input('Peak width', 0, pk_sep, pk_width)
     peak_sep = st.sidebar.number_input('Peak separation', 0, len(data_para), pk_sep)
 
-    V, errV, HOM_ortho_norm, HOM_para_norm = get_HOM_2input(data_ortho, data_para, num_peaks)
+    V, errV, HOM_ortho_norm, HOM_para_norm = get_HOM_2input(data_ortho, data_para, num_peaks, manualmode=True,
+                                                            ct_peak=central_peak, peak_sp=peak_sep, peak_w=peak_width)
 
     title_fig = 'HOM =' + str(round(V, 4)) + '±' + str(round(errV, 4))
 

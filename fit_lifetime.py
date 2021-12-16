@@ -90,7 +90,7 @@ if file is not None:
             ('Exciton', 'Trion'))
 
     # Zoom in from start - 1 ns to stop + 1 ns
-    zoom_in= st.sidebar.checkbox('Zoom')
+    zoom_in= st.sidebar.checkbox('Zoom', value=True)
     # Display graph in log scale
     log_scale = st.sidebar.checkbox('Log scale')
 

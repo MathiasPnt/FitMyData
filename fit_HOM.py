@@ -14,6 +14,7 @@ import numpy as np
 import streamlit as st
 from HOM_toolbox import get_HOM_1input, find_sidepeaks
 import matplotlib.pyplot as plt
+import os
 
 
 # Uploading data (in .txt or .dat format only). You can also drag and drop.
@@ -75,7 +76,7 @@ if file is not None:
 
     # PLot it
     fig, ax = plt.subplots()
-    title_fig = 'HOM =' + str(round(HOM, 4)) + '±' + str(round(errHOM, 4))
+    title_fig = '$V_{HOM} =$' + str(round(HOM, 4)) + '±' + str(round(errHOM, 4))
     ax.set_title(title_fig)
     ax.plot(time, data, '-o', markersize = 3)
     ax.plot(peaks, data_pk, 'o', markersize = 6, color = 'gold')
@@ -117,11 +118,27 @@ if file is not None:
         ax.set_ylim(0, 1.2*np.max(data[central_peak - 2 * peak_width:central_peak + 2 * peak_width]))
 
     ax.axvline(central_peak, linestyle='--')
-    ax.axhline(np.mean(data[peaks]), linestyle='--', linewidth=1, color="dimgray")
-    ax.axhline(np.mean(data[peaks])/2, linestyle='--', linewidth=1, color="dimgray")
 
     ax.set_xlabel("Timetag", fontsize=18)
-    ax.set_ylabel("Visibility", fontsize=18)
+    ax.set_ylabel("Counts", fontsize=18)
     ax.tick_params(direction='in', bottom=True, top=True, left=True, right=True, labelsize=12)
 
     st.pyplot(fig)
+
+    col1, col2 = st.columns(2)
+    g2 = col1.number_input('g2(0) [%] =', 0.00, 100.00)
+    M = (HOM+g2/100)/(1-g2/100)
+    text = "Ms = " + str(round(M,3)) + "±" + str(round(errHOM,3))
+    display = '<p style="font-family:sans-serif; color:seagreen; font-size: 25px;">' + text + '</p>'
+    if g2:
+        M = col2.markdown(display, unsafe_allow_html=True)
+
+
+    save_path = st.text_input('Save path location', value="/Users/mathias/Desktop")
+    if not len(save_path) == 0:
+        if not os.path.exists(save_path):
+            st.warning('This path is invalid')
+        else:
+            if st.button('Save fig'):
+                fig.savefig(save_path + os.sep + file.name[:-4] + ".pdf", bbox_inches='tight')
+                st.success("Fig was saved to " + save_path + os.sep + file.name[:-4] + ".pdf")
