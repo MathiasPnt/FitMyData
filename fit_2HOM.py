@@ -4,9 +4,10 @@
 @Contributors:
 
 This script gets the HOM of two histograms in ortho and para.
-Input: .txt (Swabian) or .dat (HydraHarp) file downloaded from your computer using the app
+Input: .txt (Swabian) or .dat (HydraHarp) file downloaded from your computer using the app for orthogonal
+        and parallel polarisation
 
-Output: Displays a graph and gives g2(0) ± statistical error.
+Output: Displays a graph and gives Visibility ± statistical error.
 
 """
 

@@ -37,9 +37,9 @@ if choose_functionality =='Select an option':
     st.image(image, caption='Mathias Pont | mathias.pont@c2n.upsaclay.fr', width = 702)
 if choose_functionality =='Lifetime':
     exec(open('fit_lifetime.py').read())
-if choose_functionality =='HOM':
+if choose_functionality =='HOM sidepeaks':
     exec(open('fit_HOM.py').read())
-if choose_functionality == '2HOM':
+if choose_functionality == 'HOM ortho/para':
     exec(open('fit_2HOM.py').read())
 if choose_functionality =='g2':
     exec(open('fit_g2.py').read())

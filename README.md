@@ -13,7 +13,14 @@ What has been implemented so far:
 4) Reflectivity spectrum
 5) photoluminescence spectrum
 
-This code comes with a build in software using streamlit. To run the code >>> streamlit run app_FitMyData.py in your terminal. 
+Rerquirmements:
+Module "HOM_toolbox". Needs to be installed on your current version of python. 
+This is a separate project, also available on GitHub.
+
+This code comes with a build in software using streamlit. To run the code:
+cd "~FitMyData/"
+streamlit run app_FitMyData.py
+in your terminal. 
 
 To help me improve this toolbox + software:
 !!!DO NOT PUSH OR COMMIT TO MAIN!!!
