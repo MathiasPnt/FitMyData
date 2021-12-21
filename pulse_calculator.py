@@ -55,7 +55,9 @@ def get_calib():
 
 # Get pulse duration from width (transform-limited)
 col1, col2 = st.columns([2, 1])
+# User inputs FWHM of emission spectrum
 FWHM = col1.number_input('Spectral width (FWHM)', value=1.0000)
+# User chooses unit
 unit_FWHM = col2.selectbox('Unit', ("nm", "pm", "px"), key = 'unit FWHM')
 if unit_FWHM == "px":
     calib = get_calib()
@@ -64,15 +66,19 @@ col2, col3 = st.columns([2, 1])
 xc = col2.number_input('Center wavelength', value=925.0, key = 'xc FWHM to tau')
 unit_xc = col3.selectbox('Unit', ("nm", ), key = 'unit xc')
 
+# Convert delta-frequency from unit to m
 delta_nu = c0 * convert_to_m(FWHM, unit_FWHM) / convert_to_m(xc, unit_xc) ** 2
 # We define TBP_gauss = ∆nu*∆tau
 TBP_gauss = 2 * np.log(2) / np.pi
+# Computes duration for gaussian pulse
 delta_tau_output_gauss = TBP_gauss / delta_nu
 
 # We define TBP_lorentz = ∆nu*∆tau
 TBP_lorentz = np.log(2) * np.sqrt(np.sqrt(2)-1) / np.pi
+# Computes duration for lorentzian pulse
 delta_tau_output_lorentz = TBP_lorentz / delta_nu
 
+# User choose which type of pulse he wants to use
 type_pulse1 = st.radio('Type of pulse', ("Gaussian", "Lorentzian"), key = 'type-1')
 
 if type_pulse1 == "Gaussian":
