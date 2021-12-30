@@ -17,6 +17,7 @@ import streamlit as st
 from lmfit import Model
 import matplotlib.pyplot as plt
 from scipy.signal import find_peaks
+import os
 
 # Some constants used to get the FSS in eV
 hbar = scipy.constants.hbar
@@ -44,20 +45,25 @@ def fit_lifetime_T(data_fit):
     result = mod.fit(data_fit, pars, x = X_fit)
     return result
 
-# Upload a file from your computer. Has to be a .dat (ASCII export from HydraHarp).
-file = st.file_uploader('Load data', type={"dat"})
+demo_mode = st.checkbox('Use demo mode', help="if you don't have your own datasets to test the software")
+
+if demo_mode:
+    file = "demo"
+    data = np.loadtxt(os.getcwd()+"/demo_data/demo_lifetime.dat", skiprows=10)[:,3]
+else:
+    # Upload a file from your computer. Has to be a .dat (ASCII export from HydraHarp).
+    file = st.file_uploader('Load data', type={"dat"})
 
 if file is not None:
-
     # This creates columns for widgets.
     col1, col2 = st.columns(2)
+    if file !="demo":
+        # This is how you add womething to one column.
+        with col1:
+            use_column = st.number_input('Use channel:', value = 0)
 
-    # This is how you add womething to one column.
-    with col1:
-        use_column = st.number_input('Use channel:', value = 0)
-
-    # For file extracted in ASCII from Picoquant software there are 10 lines of information that we skip.
-    data = np.loadtxt(file,skiprows=10)[:, use_column]
+        # For file extracted in ASCII from Picoquant software there are 10 lines of information that we skip.
+        data = np.loadtxt(file,skiprows=10)[:, use_column]
 
     # Peak finder
     # peaks is a list of the index of all peaks with a certain prominence and width

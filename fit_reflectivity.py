@@ -29,20 +29,26 @@ import heapq
 from scipy.signal import find_peaks
 import streamlit as st
 import plotly.graph_objects as go
-import seaborn as sns
 from plotly.graph_objs import *
+import os
 
 # Data must be in a .txt file with 2 columns:
 # column 1 = x abscisse in px
 # column 2 = intensity
 
-# Upload a file from your computer.
-file = st.file_uploader('Load data', type={"txt"})
+demo_mode = st.checkbox('Use demo mode', help="if you don't have your own datasets to test the software")
+
+if demo_mode:
+    file = "demo"
+    data = np.loadtxt(os.getcwd()+"/demo_data/demo_reflectivity.txt")[:,1]
+else:
+    # Upload a file from your computer.
+    file = st.file_uploader('Load data', type={"txt"})
 
 if file is not None:
-
-    # We only use the y axis stored in the second column of the .txt file here.
-    data = np.loadtxt(file)[:, 1]
+    if file != "demo":
+        # We only use the y axis stored in the second column of the .txt file here.
+        data = np.loadtxt(file)[:, 1]
 
 
     # Conversion from px to eV

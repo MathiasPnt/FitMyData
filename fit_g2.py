@@ -16,11 +16,12 @@ from HOM_toolbox import get_g2_1input, find_sidepeaks
 import matplotlib.pyplot as plt
 import os
 
-demo_mode = st.sidebar.checkbox('Use demo mode', help="if you don't have your own datasets to test the software")
+
+demo_mode = st.checkbox('Use demo mode', help="if you don't have your own datasets to test the software")
 
 if demo_mode:
     file = "demo"
-    data = np.loadtxt(os.getcwd()+"\demo_data\demo_g2.txt")[1]
+    data = np.loadtxt(os.getcwd()+"/demo_data/demo_g2.txt")[1]
 else:
     # Uploading data (in .txt or .dat format only). You can also drag and drop.
     file = st.file_uploader('Load data', type={"txt", "dat"}, help = 'Upload your data here')
