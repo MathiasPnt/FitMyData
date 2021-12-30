@@ -20,7 +20,7 @@ demo_mode = st.sidebar.checkbox('Use demo mode', help="if you don't have your ow
 
 if demo_mode:
     file = "demo"
-    data = np.loadtxt(".\demo_data\demo_g2.txt")[1]
+    data = np.loadtxt(os.getcwd()+"\demo_data\demo_g2.txt")[1]
 else:
     # Uploading data (in .txt or .dat format only). You can also drag and drop.
     file = st.file_uploader('Load data', type={"txt", "dat"}, help = 'Upload your data here')
