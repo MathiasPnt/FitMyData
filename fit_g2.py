@@ -83,6 +83,7 @@ if file is not None:
     # Create an interactive plotly plot. No more comments needed here.
     fig, ax = plt.subplots()
     ax.set_title(title_fig)
+
     ax.plot(time, data, '-o', markersize = 3, label="Data")
     ax.plot(peaks, data_pk, 'o', markersize = 6, color = 'gold')
     # Side peaks left
