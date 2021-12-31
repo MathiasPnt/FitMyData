@@ -15,6 +15,7 @@ import streamlit as st
 from HOM_toolbox import get_g2_1input, find_sidepeaks
 import matplotlib.pyplot as plt
 import os
+from from_PTU import get_ptu_fromfile
 
 
 demo_mode = st.checkbox('Use demo mode', help="if you don't have your own datasets to test the software")
@@ -24,7 +25,7 @@ if demo_mode:
     data = np.loadtxt(os.getcwd()+"/demo_data/demo_g2.txt")[1]
 else:
     # Uploading data (in .txt or .dat format only). You can also drag and drop.
-    file = st.file_uploader('Load data', type={"txt", "dat"}, help = 'Upload your data here')
+    file = st.file_uploader('Load data', type={"txt", "dat", "ptu"}, help = 'Upload your data here')
 
 col1, col2, col3, col4 = st.columns(4)
 
@@ -32,40 +33,45 @@ if file is not None:
     # if we use the mode 'demo' then data already exists
     if file != "demo":
         ext = file.name[-3:]
-        # Select which TimeTagger is used
-        with col1:
-            if ext == 'txt':
-                timetagger = st.radio("Select correlator", ('Swabian', 'HydraHarp', 'Custom dataset'), index=0, key='sw')
-            if ext == 'dat':
-                timetagger = st.radio("Select correlator", ('Swabian', 'HydraHarp', 'Custom dataset'), index=1, key='hyd')
 
-        # Get the histogram from the data file depending on which correlator was used.
-        if timetagger=='Swabian':
-            # The data has been saved using:
-            # np.savetxt(file.txt, [index, hist])
-            # we only use the hist
-            data = np.loadtxt(file)[1]
-        if timetagger == 'HydraHarp':
-            with col2:
-                # Channel used with the HydraHarp (starts at 0).
-                use_channel = st.number_input('Use channel:', value=0)
-            # For file extracted in ASCII from Picoquant software there are 10 lines of information that we skip.
-            data = np.loadtxt(file, skiprows=10)[:, use_channel]
-        if timetagger == 'Custom dataset':
-            with col2:
-                structure_data = st.radio("Data is stored in:", ('List','Lines', 'Columns'))
-            if structure_data == 'List':
-                data = np.loadtxt(file)
-            if structure_data == 'Lines':
-                with col3:
-                    use_line = st.number_input('Use line:', value=0)
-                data = np.loadtxt(file)[use_line]
-            if structure_data == 'Columns':
-                with col3:
-                    use_col = st.number_input('Use column:', value=0)
-                with col4:
-                    skip = st.number_input('Skip rows:', value=0)
-                data = np.loadtxt(file, skiprows=skip)[:, use_col]
+        if ext == "ptu":
+            _, data = get_ptu_fromfile(file)
+
+        else:
+            # Select which TimeTagger is used
+            with col1:
+                if ext == 'txt':
+                    timetagger = st.radio("Select correlator", ('Swabian', 'HydraHarp', 'Custom dataset'), index=0, key='sw')
+                if ext == 'dat':
+                    timetagger = st.radio("Select correlator", ('Swabian', 'HydraHarp', 'Custom dataset'), index=1, key='hyd')
+
+            # Get the histogram from the data file depending on which correlator was used.
+            if timetagger=='Swabian':
+                # The data has been saved using:
+                # np.savetxt(file.txt, [index, hist])
+                # we only use the hist
+                data = np.loadtxt(file)[1]
+            if timetagger == 'HydraHarp':
+                with col2:
+                    # Channel used with the HydraHarp (starts at 0).
+                    use_channel = st.number_input('Use channel:', value=0)
+                # For file extracted in ASCII from Picoquant software there are 10 lines of information that we skip.
+                data = np.loadtxt(file, skiprows=10)[:, use_channel]
+            if timetagger == 'Custom dataset':
+                with col2:
+                    structure_data = st.radio("Data is stored in:", ('List','Lines', 'Columns'))
+                if structure_data == 'List':
+                    data = np.loadtxt(file)
+                if structure_data == 'Lines':
+                    with col3:
+                        use_line = st.number_input('Use line:', value=0)
+                    data = np.loadtxt(file)[use_line]
+                if structure_data == 'Columns':
+                    with col3:
+                        use_col = st.number_input('Use column:', value=0)
+                    with col4:
+                        skip = st.number_input('Skip rows:', value=0)
+                    data = np.loadtxt(file, skiprows=skip)[:, use_col]
 
     # Create time axis to plot
     time = (np.arange(0, len(data)))
