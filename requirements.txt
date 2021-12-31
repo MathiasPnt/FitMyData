@@ -6,3 +6,4 @@ scipy~=1.7.3
 lmfit~=1.0.3
 Pillow~=8.4.0
 seaborn~=0.11.2
+cffi~=1.15.0
