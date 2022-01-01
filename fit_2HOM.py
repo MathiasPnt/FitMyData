@@ -13,7 +13,7 @@ Output: Displays a graph and gives Visibility ± statistical error.
 
 import numpy as np
 import streamlit as st
-from HOM_toolbox import get_HOM_2input, find_sidepeaks
+from HOM_Toolbox import get_HOM_2input, find_sidepeaks
 import matplotlib.pyplot as plt
 
 col1, col2 = st.columns(2)

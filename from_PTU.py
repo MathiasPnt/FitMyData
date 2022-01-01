@@ -30,14 +30,14 @@ def get_ptu_frompath(path):
 
     return hist_x, hist_y
 
-def get_ptu_fromfile(file):
+def get_ptu_fromfile(streamlit_file):
     dir = os.path.dirname(os.getcwd())
     # file is a file that has been uploaded using streamlit
-    if file is not None:
+    if streamlit_file is not None:
         local_path = dir + os.sep + "temporaryfile.ptu"
         with open(local_path, "wb") as binary_file:
             # Write bytes to file
-            binary_file.write(file.read())
+            binary_file.write(streamlit_file.read())
 
             hist_x, hist_y = get_ptu_frompath(local_path)
 
