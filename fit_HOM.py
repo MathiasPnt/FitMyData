@@ -91,10 +91,11 @@ if file is not None:
     fig, ax = plt.subplots()
     title_fig = '$V_{HOM} =$' + str(round(HOM, 4)) + '±' + str(round(errHOM, 4))
     ax.set_title(title_fig)
-    ax.plot(time, data, '-o', markersize = 3)
-    ax.plot(peaks, data_pk, 'o', markersize = 6, color = 'gold')
+    ax.plot(time, data, '-', markersize = 3)
+
 
     if show_details:
+        ax.plot(peaks, data_pk, 'o', markersize=6, color='gold')
         # Side peaks left
         [ax.plot(time[int(central_peak - (k + 1) * peak_sep - peak_width / 2):
                       int(central_peak - (k + 1) * peak_sep + peak_width / 2)],
@@ -125,14 +126,14 @@ if file is not None:
                       int(central_peak - k * peak_sep - 2 * peak_width)],
                  color='red') for k in range(1, num_peaks + 1)]
 
+        ax.axvline(central_peak, linestyle='--')
+
     ax.set_xlim(central_peak-(zoom+2)*peak_sep, central_peak+(zoom+2)*peak_sep)
 
     check_central = st.sidebar.checkbox('Check central peak')
     if check_central:
         ax.set_xlim(central_peak - 2 * peak_width, central_peak + 2 * peak_width)
         ax.set_ylim(0, 1.2*np.max(data[central_peak - 2 * peak_width:central_peak + 2 * peak_width]))
-
-    ax.axvline(central_peak, linestyle='--')
 
     ax.set_xlabel("Timetag", fontsize=18)
     ax.set_ylabel("Counts", fontsize=18)

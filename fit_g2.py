@@ -101,10 +101,12 @@ if file is not None:
     fig, ax = plt.subplots()
     ax.set_title(title_fig)
 
-    ax.plot(time, data, '-o', markersize = 3, label="Data")
-    ax.plot(peaks, data_pk, 'o', markersize = 6, color = 'gold')
+    #Plot data in a line plot
+    ax.plot(time, data, 'o', markersize = 3, label="Data")
+
 
     if show_details:
+        ax.plot(peaks, data_pk, 'o', markersize=6, color='gold')
         # Side peaks left
         [ax.plot(time[int(central_peak - k * peak_sep - peak_width / 2):
                       int(central_peak - k * peak_sep + peak_width / 2)],
@@ -134,6 +136,7 @@ if file is not None:
                  data[int(central_peak - (k + 1) * peak_sep + 2 * peak_width):
                       int(central_peak - k * peak_sep - 2 * peak_width)],
                  color='red') for k in range(1, num_peaks + 1)]
+        ax.axvline(central_peak, linestyle='--')
 
     ax.set_xlim(central_peak-(zoom+2)*peak_sep, central_peak+(zoom+2)*peak_sep)
 
@@ -142,8 +145,6 @@ if file is not None:
         ax.set_xlim(central_peak - 2 * peak_width, central_peak + 2 * peak_width)
         ax.set_ylim(0.8*np.min(data), 1.2*np.max(data[central_peak - 2 * peak_width:central_peak + 2 * peak_width]))
         ax.legend()
-
-    ax.axvline(central_peak, linestyle='--')
 
 
     ax.set_xlabel("Timetag", fontsize=18)
