@@ -4,7 +4,7 @@
 @Contributors:
 
 This script gets the histogram as an array from a PTU file.
-Input: .PTU using Mode 2 on ch 1 and 2
+Input: .PTU using Mode 2 on ch 1 and 2. Either path OR file from streamlit
 
 Output: Returns the histogram
 

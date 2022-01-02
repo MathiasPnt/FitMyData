@@ -35,6 +35,34 @@ choose_functionality = st.selectbox('What are we fiting today?',
 if choose_functionality =='Select an option':
     image = Image.open('HOM_group.png')
     st.image(image, caption='Mathias Pont | mathias.pont@c2n.upsaclay.fr', width = 702)
+
+
+    # Use local CSS to make things pretty. This is not usefull, only for aesthetic purposes.
+    def local_css(file_name):
+        with open(file_name) as f:
+            st.markdown(f"<style>{f.read()}</style>", unsafe_allow_html=True)
+
+
+    local_css("style/style.css")
+
+    # Load Animation. Here you can change the symbol to match the season.
+    animation_symbol = "❄"
+
+    st.markdown(
+        f"""
+        <div class="snowflake">{animation_symbol}</div>
+        <div class="snowflake">{animation_symbol}</div>
+        <div class="snowflake">{animation_symbol}</div>
+        <div class="snowflake">{animation_symbol}</div>
+        <div class="snowflake">{animation_symbol}</div>
+        <div class="snowflake">{animation_symbol}</div>
+        <div class="snowflake">{animation_symbol}</div>
+        <div class="snowflake">{animation_symbol}</div>
+        <div class="snowflake">{animation_symbol}</div>
+        """,
+        unsafe_allow_html=True,
+    )
+
 if choose_functionality =='Lifetime':
     exec(open('fit_lifetime.py').read())
 if choose_functionality =='HOM sidepeaks':
