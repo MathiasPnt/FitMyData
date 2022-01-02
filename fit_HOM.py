@@ -143,12 +143,16 @@ if file is not None:
     if g2:
         M = col2.markdown(display, unsafe_allow_html=True)
 
-
-    save_path = st.text_input('Save path location', value="/Users/mathias/Desktop")
-    if not len(save_path) == 0:
-        if not os.path.exists(save_path):
-            st.warning('This path is invalid')
-        else:
-            if st.button('Save fig'):
-                fig.savefig(save_path + os.sep + file.name[:-4] + ".pdf", bbox_inches='tight')
-                st.success("Fig was saved to " + save_path + os.sep + file.name[:-4] + ".pdf")
+    # To download the plot
+    directory = os.getcwd()
+    local_path = directory + os.sep + "temp_picture.pdf"
+    fig.savefig(local_path, bbox_inches='tight')
+    with open("temp_picture.pdf", "rb") as picture:
+        btn = st.download_button(
+            label="Save plot",
+            data=picture,
+            file_name=file.name[:-4] + ".pdf",
+            mime="image/pdf"
+        )
+    if btn:
+        os.remove(local_path)
