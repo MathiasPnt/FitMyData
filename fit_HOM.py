@@ -12,11 +12,12 @@ Output: Displays a graph and gives the raw V_HOM ± statistical error.
 
 import numpy as np
 import streamlit as st
-from HOM_Toolbox import get_HOM_1input, find_sidepeaks
+from antibunching_toolbox import get_HOM_1input, find_sidepeaks
 import matplotlib.pyplot as plt
 import os
 from from_PTU import get_ptu_fromfile
 
+# To show how the software work to people that does't have data files
 demo_mode = st.checkbox('Use demo mode', help="if you don't have your own datasets to test the software")
 
 if demo_mode:
@@ -29,7 +30,8 @@ else:
 col1, col2, col3, col4 = st.columns(4)
 
 if file is not None:
-    # if we use the mode 'demo' then data already exists
+    # if we use the mode 'demo' then data already exists.
+    # This will deal with how to load the data
     if file != "demo":
         ext = file.name[-3:]
         if ext == "ptu":
@@ -141,13 +143,15 @@ if file is not None:
 
     st.pyplot(fig)
 
-    col1, col2 = st.columns(2)
-    g2 = col1.number_input('g2(0) [%] =', 0.00, 100.00)
+
+
+    colg2, _, _= st.columns(3)
+    g2 = colg2.number_input('g^2(0) [%] =', 0.00, 100.00)
     M = (HOM+g2/100)/(1-g2/100)
     text = "Ms = " + str(round(M,3)) + "±" + str(round(errHOM,3))
-    display = '<p style="font-family:sans-serif; color:seagreen; font-size: 25px;">' + text + '</p>'
+    display = '<p style="font-family:sans-serif; color:firebrick; font-size: 25px;">' + text + '</p>'
     if g2:
-        M = col2.markdown(display, unsafe_allow_html=True)
+        M = st.markdown(display, unsafe_allow_html=True)
 
     if file != "demo":
         # To download the plot

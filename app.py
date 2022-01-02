@@ -10,7 +10,7 @@ toolbox to study experimentally single photon sources.
 To run the code, go to your terminal, reach the folder "FitMyData" of this project using for example
 cd /Users/mathias/PycharmProjects/FitMyData
 and run the code
-streamlit run app_FitMyData.py
+streamlit run app.py
 The app will be openned in your default browser.
 
 To add a functionality:
