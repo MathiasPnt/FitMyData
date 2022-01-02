@@ -152,16 +152,17 @@ if file is not None:
 
     st.pyplot(fig)
 
-    # To download the plot
-    directory = os.getcwd()
-    local_path = directory + os.sep + "temp_picture.pdf"
-    fig.savefig(local_path, bbox_inches='tight')
-    with open("temp_picture.pdf", "rb") as picture:
-        btn = st.download_button(
-            label="Save plot",
-            data=picture,
-            file_name=file.name[:-4] + ".pdf",
-            mime="image/pdf"
-        )
-    if btn:
-        os.remove(local_path)
+    if file != "demo":
+        # To download the plot
+        directory = os.getcwd()
+        local_path = directory + os.sep + "temp_picture.pdf"
+        fig.savefig(local_path, bbox_inches='tight')
+        with open("temp_picture.pdf", "rb") as picture:
+            btn = st.download_button(
+                label="Save plot",
+                data=picture,
+                file_name=file.name[:-4] + ".pdf",
+                mime="image/pdf"
+            )
+        if btn:
+            os.remove(local_path)
