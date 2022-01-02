@@ -82,6 +82,9 @@ if file is not None:
 
     HOM, errHOM = get_HOM_1input(data, peak_width, peak_sep, central_peak, num_peaks, baseline=base_line)
 
+    # Show integrations windows
+    show_details = st.sidebar.checkbox('Show details', value=True)
+    # Zoom out to see more peaks in the plot
     zoom = st.sidebar.slider('Zoom out [number of peaks displayed]', 1, 20, num_peaks+1)
 
     # PLot it
@@ -90,35 +93,37 @@ if file is not None:
     ax.set_title(title_fig)
     ax.plot(time, data, '-o', markersize = 3)
     ax.plot(peaks, data_pk, 'o', markersize = 6, color = 'gold')
-    # Side peaks left
-    [ax.plot(time[int(central_peak - (k + 1) * peak_sep - peak_width / 2):
-                  int(central_peak - (k + 1) * peak_sep + peak_width / 2)],
-             data[int(central_peak - (k + 1) * peak_sep - peak_width / 2):
-                  int(central_peak - (k + 1) * peak_sep + peak_width / 2)],
-             color='gold') for k in range(1, num_peaks + 1)]
-    # Side peaks right
-    [ax.plot(time[int(central_peak + (k + 1) * peak_sep - peak_width / 2):
-                  int(central_peak + (k + 1) * peak_sep + peak_width / 2)],
-             data[int(central_peak + (k + 1) * peak_sep - peak_width / 2):
-                  int(central_peak + (k + 1) * peak_sep + peak_width / 2)],
-             color='gold') for k in range(1, num_peaks + 1)]
-    # Center peak
-    ax.plot(time[int(central_peak - peak_width / 2):int(central_peak + peak_width / 2)],
-            data[int(central_peak - peak_width / 2):int(central_peak + peak_width / 2)],
-            )
-    # Baseline right
-    [ax.plot(time[int(central_peak + k * peak_sep + 2 * peak_width):
-                  int(central_peak + (k + 1) * peak_sep - 2 * peak_width)],
-             data[int(central_peak + k * peak_sep + 2 * peak_width):
-                  int(central_peak + (k + 1) * peak_sep - 2 * peak_width)],
-            color='red') for k in range(1, num_peaks + 1)]
 
-    # Baseline left
-    [ax.plot(time[int(central_peak - (k + 1) * peak_sep + 2 * peak_width):
-                  int(central_peak - k * peak_sep - 2 * peak_width)],
-             data[int(central_peak - (k + 1) * peak_sep + 2 * peak_width):
-                  int(central_peak - k * peak_sep - 2 * peak_width)],
-             color='red') for k in range(1, num_peaks + 1)]
+    if show_details:
+        # Side peaks left
+        [ax.plot(time[int(central_peak - (k + 1) * peak_sep - peak_width / 2):
+                      int(central_peak - (k + 1) * peak_sep + peak_width / 2)],
+                 data[int(central_peak - (k + 1) * peak_sep - peak_width / 2):
+                      int(central_peak - (k + 1) * peak_sep + peak_width / 2)],
+                 color='gold') for k in range(1, num_peaks + 1)]
+        # Side peaks right
+        [ax.plot(time[int(central_peak + (k + 1) * peak_sep - peak_width / 2):
+                      int(central_peak + (k + 1) * peak_sep + peak_width / 2)],
+                 data[int(central_peak + (k + 1) * peak_sep - peak_width / 2):
+                      int(central_peak + (k + 1) * peak_sep + peak_width / 2)],
+                 color='gold') for k in range(1, num_peaks + 1)]
+        # Center peak
+        ax.plot(time[int(central_peak - peak_width / 2):int(central_peak + peak_width / 2)],
+                data[int(central_peak - peak_width / 2):int(central_peak + peak_width / 2)],
+                )
+        # Baseline right
+        [ax.plot(time[int(central_peak + k * peak_sep + 2 * peak_width):
+                      int(central_peak + (k + 1) * peak_sep - 2 * peak_width)],
+                 data[int(central_peak + k * peak_sep + 2 * peak_width):
+                      int(central_peak + (k + 1) * peak_sep - 2 * peak_width)],
+                color='red') for k in range(1, num_peaks + 1)]
+
+        # Baseline left
+        [ax.plot(time[int(central_peak - (k + 1) * peak_sep + 2 * peak_width):
+                      int(central_peak - k * peak_sep - 2 * peak_width)],
+                 data[int(central_peak - (k + 1) * peak_sep + 2 * peak_width):
+                      int(central_peak - k * peak_sep - 2 * peak_width)],
+                 color='red') for k in range(1, num_peaks + 1)]
 
     ax.set_xlim(central_peak-(zoom+2)*peak_sep, central_peak+(zoom+2)*peak_sep)
 
