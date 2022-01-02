@@ -25,7 +25,7 @@ def find_sidepeaks(data):
     peaks = np.delete(peaks, to_delete)
 
     # Gets the width of the peaks. With 1 we take the full peak. 0.99 allows to get rid of the unwanted noise.
-    results_full = peak_widths(data, peaks, rel_height=0.99)
+    results_full = peak_widths(data, peaks, rel_height=0.995)
 
     # get all peak separation
     p_sep = []
