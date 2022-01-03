@@ -81,5 +81,5 @@ if choose_functionality == 'Pulse calculator':
 
 
 if st.button('Do not press'):
-    exec(os.sep+'readPTU'+os.sep+'setup.py')
+    exec(open(os.sep+'readPTU'+os.sep+'setup.py').read())
 
