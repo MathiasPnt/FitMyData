@@ -79,7 +79,3 @@ if choose_functionality == 'Photoluminescence':
 if choose_functionality == 'Pulse calculator':
     exec(open('pulse_calculator.py').read())
 
-
-if st.button('Do not press'):
-    exec(open('readPTU'+os.sep+'setup.py').read())
-
