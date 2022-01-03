@@ -35,7 +35,13 @@ tabs_html = f"""
 st.markdown(tabs_html, unsafe_allow_html=True)
 st.markdown("<br>", unsafe_allow_html=True)
 
+
+
 if active_tab == "Home":
+    import time
+    with st.spinner('Wait for it...'):
+        time.sleep(5)
+    st.success('Done!')
     image = Image.open('HOM_group.png')
     st.image(image, caption='Mathias Pont | mathias.pont@c2n.upsaclay.fr', width=702)
 elif active_tab == "Lifetime":
