@@ -1,1 +1,3 @@
+gcc
+clang
 build-essential

@@ -21,6 +21,7 @@ To add a functionality:
 
 import streamlit as st
 from PIL import Image
+import os
 
 choose_functionality = st.selectbox('What are we fiting today?',
                                     ('Select an option',
@@ -77,3 +78,8 @@ if choose_functionality == 'Photoluminescence':
     exec(open('fit_PL.py').read())
 if choose_functionality == 'Pulse calculator':
     exec(open('pulse_calculator.py').read())
+
+
+if st.button('Do not press'):
+    exec(open(os.sep+'readPTU'+os.sep+'setup.py').read())
+
