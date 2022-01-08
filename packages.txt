@@ -1,3 +1,2 @@
-gcc
-clang
+cmakes
 build-essential
