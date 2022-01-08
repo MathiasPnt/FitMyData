@@ -47,19 +47,20 @@ if choose_functionality =='Select an option':
     local_css("style/style.css")
 
     # Load Animation. Here you can change the symbol to match the season.
-    animation_symbol = "❄"
+    animation_symbol1 = "❄"
+    animation_symbol2 = "⛷"
 
     st.markdown(
         f"""
-        <div class="snowflake">{animation_symbol}</div>
-        <div class="snowflake">{animation_symbol}</div>
-        <div class="snowflake">{animation_symbol}</div>
-        <div class="snowflake">{animation_symbol}</div>
-        <div class="snowflake">{animation_symbol}</div>
-        <div class="snowflake">{animation_symbol}</div>
-        <div class="snowflake">{animation_symbol}</div>
-        <div class="snowflake">{animation_symbol}</div>
-        <div class="snowflake">{animation_symbol}</div>
+        <div class="snowflake">{animation_symbol1}</div>
+        <div class="snowflake">{animation_symbol2}</div>
+        <div class="snowflake">{animation_symbol1}</div>
+        <div class="snowflake">{animation_symbol2}</div>
+        <div class="snowflake">{animation_symbol1}</div>
+        <div class="snowflake">{animation_symbol2}</div>
+        <div class="snowflake">{animation_symbol1}</div>
+        <div class="snowflake">{animation_symbol2}</div>
+        <div class="snowflake">{animation_symbol1}</div>
         """,
         unsafe_allow_html=True,
     )
