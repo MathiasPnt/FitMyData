@@ -30,7 +30,7 @@ def cosine_decay(x, c1, c2, phi, w, tau):
 def exp_decay(x, y0, N0, t0, tau):
     return y0+N0*np.exp(-(x-t0)/tau)
 
-@st.cache(show_spinner=True)
+
 def fit_lifetime_X(data_fit):
     mod = Model(cosine_decay)
 
@@ -45,7 +45,7 @@ def fit_lifetime_X(data_fit):
     result = mod.fit(data_fit, pars, x=X_fit)
     return result
 
-@st.cache(show_spinner=True)
+
 def fit_lifetime_T(data_fit):
     mod = Model(exp_decay)
     # Initial parameter
