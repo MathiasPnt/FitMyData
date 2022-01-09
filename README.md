@@ -1,32 +1,57 @@
 # FitMyData
 
-To cite this work, see CITATION.cff
+## Presentation
 
-Efficient and versatile toolbox for analysis of time-tagged measurements (g2 and HOM), micro-cavities (reflectivity spectrum) and emission (PL). 
+To cite this work, see [this file](./CITATION.cff).
 
-The objective is to have a tool to quickly analyse data in the lab. It is not meant to cover all ppossibilities, but we would like this software to be as general as possible. 
+The objective is to have a tool to quickly analyse data in the lab. It is not meant to cover all ppossibilities, but we would like this software to be as general as possible.
 
 What has been implemented so far:
-1) Lifetime for exciton (cosine with exp decay) and trion (exp decay)
-2) HOM normalised by area of the side peaks
-3) HOM normalised by uncorelated central peak (ortho/para)
-4) g2
-5) Reflectivity spectrum
-6) photoluminescence spectrum
-7) Pulse calculator
-
-Rerquirmements:
-See requirments.txt. We can install all of them using: 'pip install -r requirements.txt' in your favorite shell. You will need some compiler for it to work (if you want to use ReadPTU). If you don't have a compiler you can use the /cloud branch. 
+1. Lifetime for exciton (cosine with exp decay) and trion (exp decay)
+2. HOM normalised by area of the side peaks
+3. HOM normalised by uncorelated central peak (ortho/para)
+4. g2
+5. Reflectivity spectrum
+6. photoluminescence spectrum
+7. Pulse calculator
 
 
-This code comes with a build in software using streamlit. To run the code:
-cd "~.FitMyData/"
-streamlit run app.py
-in your terminal. 
+## Installation and running
 
-To help improve this toolbox + software:
-!!!DO NOT PUSH OR COMMIT TO MAIN!!!
-1) Please create a branch with your _FirstnameLastname for any modifications. 
-2) All push should be adding a reasonably small feature to only one of the files. 
+### Docker
+
+This is the preferred option since it doesn't require any already installed package on your device (except for Docker).
+
+```bash
+docker build -t fitmydata .
+docker run -p 8501:8501 fitmydata
+```
+
+and then open your browser to localhost:8501
+
+### Without docker
+
+If you're on Linux, you can directly do in your favorite shell:
+
+```bash
+apt update -y && xargs apt-get install -y <packages.txt
+pip install -r requirements.txt
+```
 
 
+A C compiler is installed through `build-essential` in `packages.txt`. This is required to install the library `readPTU`.
+On other platforms (Mac, Windows..) you will need to install for yourself a C compiler, this is why the docker option is simpler.
+
+To run the streamlit app:
+
+```bash
+streamlit run app_FitMyData.py
+```
+
+## Contributing
+
+To help me improve this toolbox + software:
+**DO NOT PUSH OR COMMIT TO MAIN**.
+You should rather:
+1. Create a branch with your _FirstnameLastname for any modifications.
+2. All push should be adding a reasonably small feature to only one of the files.
