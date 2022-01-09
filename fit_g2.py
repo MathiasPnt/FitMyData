@@ -104,7 +104,7 @@ def main():
         ax.set_title(title_fig)
 
         #Plot data in a line plot
-        ax.plot(time, data, 'o', markersize = 3, label="Data")
+        ax.plot(time, data, '-', markersize = 3, label="Data")
 
 
         if show_details:
@@ -138,6 +138,8 @@ def main():
                      data[int(central_peak - (k + 1) * peak_sep + 2 * peak_width):
                           int(central_peak - k * peak_sep - 2 * peak_width)],
                      color='red') for k in range(1, num_peaks + 1)]
+
+            # Vertical line for central peak
             ax.axvline(central_peak, linestyle='--')
 
         ax.set_xlim(central_peak-(zoom+2)*peak_sep, central_peak+(zoom+2)*peak_sep)
