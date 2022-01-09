@@ -31,31 +31,31 @@ def exp_decay(x, y0, N0, t0, tau):
     return y0+N0*np.exp(-(x-t0)/tau)
 
 
-def fit_lifetime_X(data_fit):
+def fit_lifetime_X(data_fit, x_axis, c, w, tau):
     mod = Model(cosine_decay)
 
     # Initial parameter for the fit
     pars = Parameters()
     pars.add('c1', value=1)
-    pars.add('c2', value=c_)
+    pars.add('c2', value=c)
     pars.add('phi', value=0)
-    pars.add('w', value=w_, min=0)
-    pars.add('tau', value=tau_)
+    pars.add('w', value=w, min=0)
+    pars.add('tau', value=tau)
 
-    result = mod.fit(data_fit, pars, x=X_fit)
+    result = mod.fit(data_fit, pars, x=x_axis)
     return result
 
 
-def fit_lifetime_T(data_fit):
+def fit_lifetime_T(data_fit, x_axis, c, tau):
     mod = Model(exp_decay)
     # Initial parameter
     pars = Parameters()
     pars.add('y0', value=1)
-    pars.add('N0', value=c_)
+    pars.add('N0', value=c)
     pars.add('t0', value=0, min=0)
-    pars.add('tau', value=tau_)
+    pars.add('tau', value=tau)
 
-    result = mod.fit(data_fit, pars, x=X_fit)
+    result = mod.fit(data_fit, pars, x=x_axis)
     return result
 
 
@@ -145,7 +145,7 @@ def main():
 
         if excitonic_particle == 'Exciton':
 
-            fit_X = fit_lifetime_X(data_fit)
+            fit_X = fit_lifetime_X(data_fit, X_fit, c_, w_, tau_)
 
             # gets the y value of the fit
             Y_fit = fit_X.best_fit
@@ -163,7 +163,7 @@ def main():
             title_fig = 'Lifetime = ' + str(round(tau * 1000, 2)) + ' ps, FSS = ' + str(round(1e9 * w * 2 * hbar / eV, 9)) + ' eV'
             ax.set_title(title_fig)
         else:
-            fit_T = fit_lifetime_T(data_fit)
+            fit_T = fit_lifetime_T(data_fit, X_fit, c_, tau_)
 
             # gets the y value of the fit
             Y_fit = fit_T.best_fit
