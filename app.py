@@ -30,8 +30,8 @@ choose_functionality = st.selectbox('What are we fiting today?',
                                      'HOM ortho/para',
                                      'g2',
                                      'Reflectivity',
-                                     "Photoluminescence",
-                                     "Pulse calculator"))
+                                     'Photoluminescence',
+                                     'Pulse calculator'))
 
 if choose_functionality =='Select an option':
     image = Image.open('HOM_group.png')
