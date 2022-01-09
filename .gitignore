@@ -1,0 +1,7 @@
+# personal IDE configs
+*.idea
+
+# temporary file for saving 
+*.pdf
+*.txt
+
