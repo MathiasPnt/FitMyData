@@ -45,7 +45,7 @@ On other platforms (Mac, Windows..) you will need to install for yourself a C co
 To run the streamlit app:
 
 ```bash
-streamlit run app_FitMyData.py
+streamlit run app.py
 ```
 
 ## Contributing
