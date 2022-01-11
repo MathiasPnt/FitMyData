@@ -19,7 +19,7 @@ import scipy.constants
 c0 = scipy.constants.c
 
 
-def convert_to_m(value, unit):
+def convert_to_m(value, unit, calib):
     if unit == "nm":
         return value*1e-9
     if unit == "pm":
@@ -64,13 +64,15 @@ def main():
     unit_FWHM = col2.selectbox('Unit', ("nm", "pm", "px"), key = 'unit FWHM')
     if unit_FWHM == "px":
         calib = get_calib()
+    else:
+        calib = 1
 
     col2, col3 = st.columns([2, 1])
     xc = col2.number_input('Center wavelength', value=925.0, key = 'xc FWHM to tau')
     unit_xc = col3.selectbox('Unit', ("nm", ), key = 'unit xc')
 
     # Convert delta-frequency from unit to m
-    delta_nu = c0 * convert_to_m(FWHM, unit_FWHM) / convert_to_m(xc, unit_xc) ** 2
+    delta_nu = c0 * convert_to_m(FWHM, unit_FWHM, calib) / convert_to_m(xc, unit_xc, calib) ** 2
     # We define TBP_gauss = ∆nu*∆tau
     TBP_gauss = 2 * np.log(2) / np.pi
     # Computes duration for gaussian pulse
@@ -108,8 +110,8 @@ def main():
     delta_nu_gauss = TBP_gauss / convert_to_s(delta_tau_input, unit_delta_tau)
     delta_nu_lorentz = TBP_lorentz / convert_to_s(delta_tau_input, unit_delta_tau)
 
-    delta_lambda_gauss = delta_nu_gauss * convert_to_m(xc, unit_xc) ** 2 / c0
-    delta_lambda_lorentz = delta_nu_lorentz * convert_to_m(xc, unit_xc) ** 2 / c0
+    delta_lambda_gauss = delta_nu_gauss * convert_to_m(xc, unit_xc, calib) ** 2 / c0
+    delta_lambda_lorentz = delta_nu_lorentz * convert_to_m(xc, unit_xc, calib) ** 2 / c0
 
     type_pulse2 = st.radio('Type of pulse', ("Gaussian", "Lorentzian"), key = 'type-2')
 
