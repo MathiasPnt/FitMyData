@@ -3,3 +3,7 @@
 
 # temporary file for saving 
 *.pdf
+
+__pycache__/
+*.pyc
+

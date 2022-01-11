@@ -46,13 +46,14 @@ def main():
                                 key='dislpay unit')
         # !!!! Calibration !!!!
         # Conversion between px and nm (... px = 1 nm)
-        if spectrometer == "White left":
-            calib = st.sidebar.number_input('Calibration spectrometer [px/nm]', value=45.34942, key='display unit')
-        if spectrometer == "White right":
-            calib = st.sidebar.number_input('Calibration spectrometer [px/nm]', value=45.34942, key='display unit')
-        if spectrometer == "Blue":
-            calib = st.sidebar.number_input('Calibration spectrometer [px/nm]', value=77.7191, key='display unit')
+        if spectrometer in ["White left", "White right"]:
+            value = 45.34942
+        elif spectrometer == "Blue":
+            value = 77.7191
+        else:
+            raise NotImplementedError(spectrometer)
 
+        calib = st.sidebar.number_input('Calibration spectrometer [px/nm]', value=value, key='display unit')
         return calib
 
     # Get pulse duration from width (transform-limited)
@@ -84,9 +85,11 @@ def main():
     type_pulse1 = st.radio('Type of pulse', ("Gaussian", "Lorentzian"), key = 'type-1')
 
     if type_pulse1 == "Gaussian":
-        text = 'Pulse duration: '+str(round(delta_tau_output_gauss*1e12,2)) +" ps"
+        delta_tau = delta_tau_output_gauss
     if type_pulse1 == "Lorentzian":
-        text = 'Pulse duration: ' + str(round(delta_tau_output_lorentz * 1e12, 2)) + " ps"
+        delta_tau = delta_tau_output_lorentz
+    duration = round(delta_tau * 1e12, 2)
+    text = f'Pulse duration: {duration} ps'
     display = '<p style="font-family:sans-serif; color:seagreen; font-size: 32px;">'+text+'</p>'
     delta_tau = st.markdown(display, unsafe_allow_html=True)
 
@@ -112,27 +115,26 @@ def main():
 
     col9, col10 = st.columns([3, 1])
     unit_result = col10.selectbox('Unit', ("px", "nm", "pm"), key = 'unit-result')
+
+    if type_pulse2 == "Gaussian":
+        delta_lambda = delta_lambda_gauss
+    if type_pulse2 == "Lorentzian":
+        delta_lambda = delta_lambda_lorentz
+
     if unit_result=='px':
         if unit_FWHM == "px":
             pass
         else:
             calib = get_calib()
-        if type_pulse2 == "Gaussian":
-            text = 'Pulse width: ' + str(round(calib * delta_lambda_gauss*1e9, 2)) + " px"
-        if type_pulse2 == "Lorentzian":
-            text = 'Pulse width: ' + str(round(calib * delta_lambda_lorentz * 1e9, 2)) + " px"
+        width = round(calib * delta_lambda*1e9, 2)
 
     if unit_result=='nm':
-        if type_pulse2 == "Gaussian":
-            text = 'Pulse width: '+str(round(delta_lambda_gauss*1e9, 3)) +" nm"
-        if type_pulse2 == "Lorentzian":
-            text = 'Pulse width: '+str(round(delta_lambda_lorentz*1e9, 3)) +" nm"
+        width = round(delta_lambda*1e9, 3)
 
     if unit_result=='pm':
-        if type_pulse2 == "Gaussian":
-            text = 'Pulse width: '+str(round(delta_lambda_gauss*1e12, 3)) +" pm"
-        if type_pulse2 == "Lorentzian":
-            text = 'Pulse width: '+str(round(delta_lambda_lorentz*1e12, 3)) +" pm"
+        width = round(delta_lambda*1e12, 3)
+
+    text = f'Pulse width: {width} {unit_result}'
     display = '<p style="font-family:sans-serif; color:seagreen; font-size: 32px;">'+text+'</p>'
     delta_lambda = col9.markdown(display, unsafe_allow_html=True)
 

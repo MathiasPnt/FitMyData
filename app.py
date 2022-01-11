@@ -22,6 +22,13 @@ To add a functionality:
 import streamlit as st
 from PIL import Image
 import os
+import fit_lifetime
+import pulse_calculator
+import fit_HOM
+import fit_2HOM
+import fit_g2
+import fit_reflectivity
+import fit_PL
 
 choose_functionality = st.selectbox('What are we fiting today?',
                                     ('Select an option',
@@ -66,17 +73,17 @@ if choose_functionality =='Select an option':
     )
 
 if choose_functionality =='Lifetime':
-    exec(open('fit_lifetime.py').read())
+    fit_lifetime.main()
 if choose_functionality =='HOM sidepeaks':
-    exec(open('fit_HOM.py').read())
+    fit_HOM.main()
 if choose_functionality == 'HOM ortho/para':
-    exec(open('fit_2HOM.py').read())
+    fit_2HOM.main()
 if choose_functionality =='g2':
-    exec(open('fit_g2.py').read())
+    fit_g2.main()
 if choose_functionality == 'Reflectivity':
-    exec(open('fit_reflectivity.py').read())
+    fit_reflectivity.main()
 if choose_functionality == 'Photoluminescence':
-    exec(open('fit_PL.py').read())
+    fit_PL.main()
 if choose_functionality == 'Pulse calculator':
-    exec(open('pulse_calculator.py').read())
+    pulse_calculator.main()
 

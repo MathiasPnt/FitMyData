@@ -25,6 +25,8 @@ This is the preferred option since it doesn't require any already installed pack
 ```bash
 docker build -t fitmydata .
 docker run -p 8501:8501 fitmydata
+# Or you can rather use the following run command to mount your code into the docker so that you can change the code in your IDE and it will be sync into the docker
+docker run -p 8501:8501 -v ~/FitMyData:/workspace fitmydata
 ```
 
 and then open your browser to localhost:8501
