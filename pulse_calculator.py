@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
 @Authors: Mathias Pont
-@Contributors:
+@Contributors: Antoine H.
 
 This script the pulse duration from the FWHM
 
