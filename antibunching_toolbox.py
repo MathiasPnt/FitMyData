@@ -7,15 +7,15 @@ import numpy as np
 from scipy.signal import find_peaks, peak_widths
 import matplotlib.pyplot as plt
 
+
 def find_sidepeaks(data):
     # Peak finder
     # peaks is a list of the index of all peaks with a certain prominence and width
-    peaks, properties = find_peaks(data, prominence=np.max(data)/2, width=4)
+    peaks, properties = find_peaks(data, prominence=np.max(data) / 2)
 
-    if len(peaks)==0:
-        return "Error: no peaks found"
-        plt.figure()
-        plt.plot(data)
+    if len(peaks) == 0:
+        raise ValueError('The code was not able to find the parameters of the histogram.\n '
+                         'Your data is not compatible with this software')
 
     # histogram with only the side peaks
     data_pk = data[peaks]
@@ -25,7 +25,7 @@ def find_sidepeaks(data):
     peaks = np.delete(peaks, to_delete)
 
     # Gets the width of the peaks. With 1 we take the full peak. 0.99 allows to get rid of the unwanted noise.
-    results_full = peak_widths(data, peaks, rel_height=0.995)
+    results_full = peak_widths(data, peaks, rel_height=0.997)
 
     # get all peak separation
     p_sep = []
@@ -46,8 +46,9 @@ def find_sidepeaks(data):
 
     return peaks, data_pk, ct_peak, pk_sep, pk_width
 
+
 def get_baseline(data, central_pk, pk_width, pk_sep, num_pks):
-    if 4*pk_width > pk_sep:
+    if 4 * pk_width > pk_sep:
         print("Error: No baseline, peak is too wide")
         bg = 0
         return bg
@@ -66,8 +67,7 @@ def get_baseline(data, central_pk, pk_width, pk_sep, num_pks):
         return bg
 
 
-def get_g2_1input(dat_g2, peak_width, peak_sep, central_peak, num_peaks, baseline = True):
-
+def get_g2_1input(dat_g2, peak_width, peak_sep, central_peak, num_peaks, baseline=True):
     if baseline:
         bg = get_baseline(dat_g2, central_peak, peak_width, peak_sep, num_peaks)
     else:
@@ -78,11 +78,11 @@ def get_g2_1input(dat_g2, peak_width, peak_sep, central_peak, num_peaks, baselin
     err_cent = np.sqrt(cent)
 
     # k will go from 1 to num_peaks
-    #We fill p1 and p2 starting at index 0
+    # We fill p1 and p2 starting at index 0
     p1 = [np.sum(dat_g2[int(central_peak - k * peak_sep - peak_width / 2):
                         int(central_peak - k * peak_sep + peak_width / 2)])
           - bg * peak_width
-          for k in range(1, num_peaks+1)]
+          for k in range(1, num_peaks + 1)]
     p2 = [np.sum(dat_g2[int(central_peak + k * peak_sep - peak_width / 2):
                         int(central_peak + k * peak_sep + peak_width / 2)])
           - bg * peak_width
@@ -96,8 +96,8 @@ def get_g2_1input(dat_g2, peak_width, peak_sep, central_peak, num_peaks, baselin
 
     return g2, err_g2
 
-def get_HOM_1input(dat_HOM, peak_width, peak_sep, central_peak, num_peaks, baseline = True):
 
+def get_HOM_1input(dat_HOM, peak_width, peak_sep, central_peak, num_peaks, baseline=True):
     if baseline:
         bg = get_baseline(dat_HOM, central_peak, peak_width, peak_sep, num_peaks)
     else:
@@ -123,11 +123,12 @@ def get_HOM_1input(dat_HOM, peak_width, peak_sep, central_peak, num_peaks, basel
     err_peak = np.sqrt(peak)
 
     V = 1 - 2 * cent / peak
-    err_V = (1-V)*np.sqrt((err_cent / cent)**2 + (err_peak / peak)**2)
+    err_V = (1 - V) * np.sqrt((err_cent / cent) ** 2 + (err_peak / peak) ** 2)
 
     return V, err_V
 
-def get_HOM_2input(HOM_ortho, HOM_para, num_peaks=6, baseline = True, plotit = False, manualmode = False,
+
+def get_HOM_2input(HOM_ortho, HOM_para, num_peaks=6, baseline=True, plotit=False, manualmode=False,
                    ct_peak=1557, peak_sp=190, peak_w=35):
     """
     :param HOM_ortho: list - histogram of 2-photon correlation with orthogonal polarisation
@@ -165,17 +166,16 @@ def get_HOM_2input(HOM_ortho, HOM_para, num_peaks=6, baseline = True, plotit = F
 
         bg_4 = [np.mean(HOM_ortho[int(central_peak - (k + 1) * peak_sep + 2 * peak_width):
                                   int(central_peak - k * peak_sep - 2 * peak_width)])
-                    for k in range(1, num_peaks + 1)]
+                for k in range(1, num_peaks + 1)]
         bg_para = np.mean([bg_1, bg_2])
         bg_ortho = np.mean([bg_3, bg_4])
 
         HOM_para = [x - bg_para for x in HOM_para]
         HOM_ortho = [x - bg_ortho for x in HOM_ortho]
 
-
     p1 = [np.sum(HOM_para[int(central_peak - k * peak_sep - peak_width / 2):
                           int(central_peak - k * peak_sep + peak_width / 2)])
-            for k in range(1, num_peaks + 1)]
+          for k in range(1, num_peaks + 1)]
 
     p2 = [np.sum(HOM_para[int(central_peak + k * peak_sep - peak_width / 2):
                           int(central_peak + k * peak_sep + peak_width / 2)])
@@ -202,16 +202,15 @@ def get_HOM_2input(HOM_ortho, HOM_para, num_peaks=6, baseline = True, plotit = F
         to_add = peaks_ortho[i + 1] - peaks_ortho[i]
         p_sep = p_sep + [to_add]
 
-    central_index = int(np.where(p_sep > np.mean(p_sep) + 2*np.std(p_sep))[0][0])
+    central_index = int(np.where(p_sep > np.mean(p_sep) + 2 * np.std(p_sep))[0][0])
 
     data_pk_ortho_norm = HOM_ortho_norm[peaks_ortho]
     data_pk_para_norm = HOM_para_norm[peaks_para]
 
-
-    HOM_para_norm_factor = np.mean(data_pk_para_norm[central_index-num_peaks:central_index-2]+
-                                   data_pk_para_norm[central_index+2:central_index+num_peaks])/2
-    HOM_ortho_norm_factor = np.mean(data_pk_ortho_norm[central_index-num_peaks:central_index-2]+
-                                    data_pk_ortho_norm[central_index+2:central_index+num_peaks])/2
+    HOM_para_norm_factor = np.mean(data_pk_para_norm[central_index - num_peaks:central_index - 2] +
+                                   data_pk_para_norm[central_index + 2:central_index + num_peaks]) / 2
+    HOM_ortho_norm_factor = np.mean(data_pk_ortho_norm[central_index - num_peaks:central_index - 2] +
+                                    data_pk_ortho_norm[central_index + 2:central_index + num_peaks]) / 2
 
     HOM_ortho_norm = HOM_ortho_norm / HOM_ortho_norm_factor  # normalized to 1
     HOM_para_norm = HOM_para_norm / HOM_para_norm_factor
@@ -219,16 +218,16 @@ def get_HOM_2input(HOM_ortho, HOM_para, num_peaks=6, baseline = True, plotit = F
     cent_para = np.sum(HOM_para_norm[int(central_peak - peak_width / 2):
                                      int(central_peak + peak_width / 2)])
     err_cent_para = np.sqrt(np.sum(HOM_para[int(central_peak - peak_width / 2):
-                                            int(central_peak + peak_width / 2)]))/peak_para
+                                            int(central_peak + peak_width / 2)])) / peak_para
 
     cent_ortho = np.sum(HOM_ortho_norm[int(central_peak - peak_width / 2):
                                        int(central_peak + peak_width / 2)])
     err_cent_ortho = np.sqrt(np.sum(HOM_ortho[int(central_peak - peak_width / 2):
-                                              int(central_peak + peak_width / 2)]))/peak_ortho
+                                              int(central_peak + peak_width / 2)])) / peak_ortho
 
     V = (cent_ortho - cent_para) / cent_ortho
 
-    errV = (1-V)*np.sqrt((err_cent_ortho / cent_ortho)**2 + (err_cent_para / cent_para)**2)
+    errV = (1 - V) * np.sqrt((err_cent_ortho / cent_ortho) ** 2 + (err_cent_para / cent_para) ** 2)
 
     if plotit:
         title_fig = 'HOM =' + str(round(V, 4)) + '±' + str(round(errV, 4))
@@ -236,12 +235,12 @@ def get_HOM_2input(HOM_ortho, HOM_para, num_peaks=6, baseline = True, plotit = F
         # PLot it
         fig, ax = plt.subplots()
         ax.set_title(title_fig)
-        ax.plot(time, HOM_ortho_norm, '-o', label = 'Ortho')
-        ax.plot(time, HOM_para_norm, '-o', label = 'Para')
+        ax.plot(time, HOM_ortho_norm, '-o', label='Ortho')
+        ax.plot(time, HOM_para_norm, '-o', label='Para')
         # Center peak
         ax.plot(time[int(central_peak - peak_width / 2):int(central_peak + peak_width / 2)],
                 HOM_para_norm[int(central_peak - peak_width / 2):int(central_peak + peak_width / 2)],
-                color = 'seagreen')
+                color='seagreen')
         ax.plot(time[int(central_peak - peak_width / 2):int(central_peak + peak_width / 2)],
                 HOM_ortho_norm[int(central_peak - peak_width / 2):int(central_peak + peak_width / 2)],
                 color='seagreen')
@@ -254,10 +253,10 @@ def get_HOM_2input(HOM_ortho, HOM_para, num_peaks=6, baseline = True, plotit = F
         ax.axvline(central_peak, linestyle='--')
         ax.legend()
 
-
     return V, errV, HOM_ortho_norm, HOM_para_norm
 
-def plot_histo(string, data, num_peaks = 6):
+
+def plot_histo(string, data, num_peaks=6):
     """
     :param string: str - 'HOM' or 'g2'
     :param data: list - histogram of 2-photon correlation
@@ -278,16 +277,15 @@ def plot_histo(string, data, num_peaks = 6):
     # PLot it
     fig, ax = plt.subplots()
     ax.set_title(title_fig)
-    ax.bar(time, data)
-    #ax.plot(time, data, '-o')
-    ax.plot(peaks, data_pk, 'o', markersize = 6, color = 'gold')
+    ax.plot(time, data, '-o')
+    ax.plot(peaks, data_pk, 'o', markersize=6, color='gold')
     if string == 'HOM':
         # Side peaks left
         [ax.plot(time[int(central_peak - (k + 1) * peak_sep - peak_width / 2):
                       int(central_peak - (k + 1) * peak_sep + peak_width / 2)],
                  data[int(central_peak - (k + 1) * peak_sep - peak_width / 2):
                       int(central_peak - (k + 1) * peak_sep + peak_width / 2)],
-                 color='gold') for k in range(1,num_peaks+1)]
+                 color='gold') for k in range(1, num_peaks + 1)]
         # Side peaks right
         [ax.plot(time[int(central_peak + (k + 1) * peak_sep - peak_width / 2):
                       int(central_peak + (k + 1) * peak_sep + peak_width / 2)],
@@ -317,7 +315,7 @@ def plot_histo(string, data, num_peaks = 6):
                   int(central_peak + (k + 1) * peak_sep - 2 * peak_width)],
              data[int(central_peak + k * peak_sep + 2 * peak_width):
                   int(central_peak + (k + 1) * peak_sep - 2 * peak_width)],
-            color='red') for k in range(1, num_peaks + 1)]
+             color='red') for k in range(1, num_peaks + 1)]
 
     # Baseline left
     [ax.plot(time[int(central_peak - (k + 1) * peak_sep + 2 * peak_width):
@@ -326,7 +324,7 @@ def plot_histo(string, data, num_peaks = 6):
                   int(central_peak - k * peak_sep - 2 * peak_width)],
              color='red') for k in range(1, num_peaks + 1)]
 
-    ax.set_xlim(central_peak-(num_peaks+2)*peak_sep, central_peak+(num_peaks+2)*peak_sep)
+    ax.set_xlim(central_peak - (num_peaks + 2) * peak_sep, central_peak + (num_peaks + 2) * peak_sep)
 
     ax.axvline(central_peak, linestyle='--')
 
