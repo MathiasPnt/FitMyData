@@ -54,8 +54,8 @@ if choose_functionality =='Select an option':
     local_css("style/style.css")
 
     # Load Animation. Here you can change the symbol to match the season.
-    animation_symbol1 = "❄"
-    animation_symbol2 = "⛷"
+    animation_symbol1 = "🥞"
+    animation_symbol2 = "🥞"
 
     st.markdown(
         f"""
