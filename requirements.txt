@@ -1,5 +1,5 @@
 numpy~=1.22.1
-streamlit==1.4.0
+streamlit~=1.5.0
 matplotlib~=3.5.1
 plotly==5.5.0
 scipy~=1.7.3
@@ -8,9 +8,10 @@ Pillow==9.0.0
 seaborn~=0.11.2
 cffi~=1.15.0
 watchdog~=2.1.6
+pandas~=1.4.0
 setuptools
-cmake
 
 git+https://github.com/anth2o/readPTU.git@fix-install-missing-cffi
 # this requirement could be changed to the original repo when this PR is merged https://github.com/QuantumPhotonicsLab/readPTU/pull/5
+
 
