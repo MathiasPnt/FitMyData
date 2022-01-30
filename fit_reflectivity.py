@@ -24,7 +24,7 @@ Pixel Format = Convert CCD X/Y Dimension into 1 Dimension
 """
 
 import numpy as np
-from lmfit.models import LorentzianModel, QuadraticModel
+from lmfit.models import LorentzianModel, LinearModel
 import heapq
 from scipy.signal import find_peaks
 import streamlit as st
@@ -78,8 +78,8 @@ def fit_cav(x, y, start_search, stop_search, number_of_elements, zoom_fit):
     xdat = x[start_search:stop_search]
     ydat = y[start_search:stop_search]
 
-    model = QuadraticModel(prefix="bkg_")
-    params = model.make_params(a=0, b=0, c=0)
+    model = LinearModel(prefix="bkg_")
+    params = model.make_params(a=0, b=0)
 
     peaks, properties = find_peaks(-ydat, prominence=np.max(-ydat) / 2)
 
