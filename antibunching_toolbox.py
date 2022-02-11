@@ -92,8 +92,9 @@ def get_g2_1input(dat_g2, peak_width, peak_sep, central_peak, num_peaks, baselin
     err_peak = np.sqrt(peak)
 
     g2 = cent / peak
+    err_g2 = g2 * np.sqrt((err_cent / cent) ** 2 + (err_peak / peak) ** 2)
 
-    return g2
+    return g2, err_g2
 
 
 def get_HOM_1input(dat_HOM, peak_width, peak_sep, central_peak, num_peaks, baseline=True):
@@ -122,8 +123,9 @@ def get_HOM_1input(dat_HOM, peak_width, peak_sep, central_peak, num_peaks, basel
     err_peak = np.sqrt(peak)
 
     V = 1 - 2 * cent / peak
+    err_V = (1 - V) * np.sqrt((err_cent / cent) ** 2 + (err_peak / peak) ** 2)
 
-    return V
+    return V, err_V
 
 
 def get_HOM_2input(HOM_ortho, HOM_para, num_peaks=6, baseline=True, plotit=False, manualmode=False,

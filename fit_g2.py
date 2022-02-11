@@ -6,7 +6,7 @@
 This script gets the g2(0) of an histogram.
 Input: .txt (Swabian) or .dat (HydraHarp) file downloaded from your computer using the app
 
-Output: Displays a graph and gives g2(0) ± error on measurement.
+Output: Displays a graph and gives g2(0) ± statistical error.
 
 """
 
@@ -89,20 +89,9 @@ def main():
         peak_sep = st.sidebar.number_input('Peak separation', 0, len(data), pk_sep)
         base_line = st.sidebar.checkbox('Substract baseline', value=True)
 
-        # Compute g2
-        g2 = get_g2_1input(data, peak_width, peak_sep, central_peak, num_peaks, baseline=base_line)
-        # Compute error on g2
-        errg2 = np.std([get_g2_1input(np.random.poisson(data),
-                                      peak_width,
-                                      peak_sep,
-                                      central_peak,
-                                      num_peaks,
-                                      baseline=base_line)
-                        for sim in range(100)
-                        ]
-                       )
+        g2, errg2 = get_g2_1input(data, peak_width, peak_sep, central_peak, num_peaks, baseline=base_line)
 
-        title_fig = f'g2 = {g2:.3} \u00B1 {errg2:.2}'
+        title_fig = 'g2 =' + str(round(g2, 4)) + '±' + str(round(errg2, 4))
 
         # Show integrations windows
         show_details = st.sidebar.checkbox('Show details', value=True)
