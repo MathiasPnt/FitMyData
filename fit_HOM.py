@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
 @Authors: Mathias Pont
-@Contributors:
+@Contributors: Andreas Fyrillas
 
 This script gets the raw V_HOM (1-2*g2(0)) of an histogram.
 Input: .txt (Swabian) or .dat (HydraHarp) file downloaded from your computer using the app
@@ -85,7 +85,18 @@ def main():
         peak_sep = st.sidebar.number_input('Peak separation', 0, len(data), pk_sep)
         base_line = st.sidebar.checkbox('Substract baseline', value = True)
 
-        HOM, errHOM = get_HOM_1input(data, peak_width, peak_sep, central_peak, num_peaks, baseline=base_line)
+        # Compute HOM
+        hom = get_HOM_1input(data, peak_width, peak_sep, central_peak, num_peaks, baseline=base_line)
+        # Compute error on g2
+        errhom = np.std([get_HOM_1input(np.random.poisson(data),
+                                        peak_width,
+                                        peak_sep,
+                                        central_peak,
+                                        num_peaks,
+                                        baseline=base_line)
+                         for sim in range(100)
+                         ]
+                        )
 
         # Show integrations windows
         show_details = st.sidebar.checkbox('Show details', value=True)
@@ -94,7 +105,7 @@ def main():
 
         # PLot it
         fig, ax = plt.subplots()
-        title_fig = '$V_{HOM} =$' + str(round(HOM, 4)) + '±' + str(round(errHOM, 4))
+        title_fig = '$V_{HOM}$' + f'= {hom * 100:.3} \u00B1 {errhom * 100:.2} %'
         ax.set_title(title_fig)
         ax.plot(time, data, '-', markersize = 3)
 
@@ -146,16 +157,22 @@ def main():
 
         st.pyplot(fig)
 
-
-
-        colg2, _, _= st.columns(3)
-        g2 = colg2.number_input('g^2(0) [%] =', 0.00, 100.00)
-        M = (HOM+g2/100)/(1-g2/100)
-        text = "Ms = " + str(round(M,3)) + "±" + str(round(errHOM,3))
+        colg2, colerrg2, _= st.columns(3)
+        g2 = colg2.number_input('g^2(0) [%] =', 0.00, 100.00) / 100
+        errg2 = colerrg2.number_input('\u00B1', 0.00, 100.00) / 100
+        # Compute corrected HOM value
+        M = (hom+g2)/(1-g2)
+        # Compute error on corrected HOM value
+        if g2 != 0:
+            errnum = (hom+g2) * np.sqrt( (errhom/hom)**2 + (errg2/g2)**2 )  # error on numerator
+            errM = M * np.sqrt( (errnum/(hom+g2))**2 + (errg2/g2)**2 )  # error on value
+        else:
+            errM = 0.
+        # Display value
+        text = f'Ms = {M * 100:.3} \u00B1 {errM * 100:.2} %'
         display = '<p style="font-family:sans-serif; color:firebrick; font-size: 25px;">' + text + '</p>'
         if g2:
             M = st.markdown(display, unsafe_allow_html=True)
-
         if file != "demo":
             # To download the plot
             directory = os.getcwd()
