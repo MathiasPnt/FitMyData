@@ -15,7 +15,7 @@ The app will be openned in your default browser.
 
 To add a functionality:
 1) Create a separate .py file that should be an independant stramlit app.
-2) Add it's name to the "Choose" selectbox
+2) Add its name to the "Choose" selectbox
 3) Add it to the "if" using exec(open('your_file.py').read())
 """
 
@@ -30,7 +30,7 @@ import fit_g2
 import fit_reflectivity
 import fit_PL
 
-choose_functionality = st.selectbox('What are we fiting today?',
+choose_functionality = st.selectbox('What are we fitting today?',
                                     ('Select an option',
                                      'Lifetime',
                                      'HOM sidepeaks',

@@ -6,7 +6,7 @@
 This script gets the raw V_HOM (1-2*g2(0)) of an histogram.
 Input: .txt (Swabian) or .dat (HydraHarp) file downloaded from your computer using the app
 
-Output: Displays a graph and gives the raw V_HOM ± statistical error.
+Output: Displays a graph and gives the raw V_HOM ± error on measurement.
 
 """
 
@@ -46,7 +46,7 @@ def main():
                         timetagger = st.radio("Select correlator", ('Swabian', 'HydraHarp', 'Custom dataset'), index = 0, key = 'sw')
                     if ext == 'dat':
                         timetagger = st.radio("Select correlator", ('Swabian', 'HydraHarp', 'Custom dataset'), index = 1, key = 'hyd')
-                # Get the histogram from the data file depending on which correlator was used.
+               # Get the histogram from the data file depending on which correlator was used.
                 if timetagger == 'Swabian':
                     data = np.loadtxt(file)[1]
                 if timetagger == 'HydraHarp':
@@ -85,7 +85,18 @@ def main():
         peak_sep = st.sidebar.number_input('Peak separation', 0, len(data), pk_sep)
         base_line = st.sidebar.checkbox('Substract baseline', value = True)
 
-        HOM, errHOM = get_HOM_1input(data, peak_width, peak_sep, central_peak, num_peaks, baseline=base_line)
+        # Compute HOM visibility
+        hom = get_HOM_1input(data, peak_width, peak_sep, central_peak, num_peaks, baseline=base_line)
+        # Compute error on HOM value
+        errhom = np.std([get_HOM_1input(np.random.poisson(data),
+                                        peak_width,
+                                        peak_sep,
+                                        central_peak,
+                                        num_peaks,
+                                        baseline=base_line)
+                         for sim in range(100)
+                         ]
+                        )
 
         # Show integrations windows
         show_details = st.sidebar.checkbox('Show details', value=True)
@@ -94,7 +105,7 @@ def main():
 
         # PLot it
         fig, ax = plt.subplots()
-        title_fig = '$V_{HOM} =$' + str(round(HOM, 4)) + '±' + str(round(errHOM, 4))
+        title_fig = '$V_{HOM}$' + f'= {hom:.3} \u00B1 {errhom:.2}'
         ax.set_title(title_fig)
         ax.plot(time, data, '-', markersize = 3)
 
@@ -148,13 +159,20 @@ def main():
 
 
 
-        colg2, _, _= st.columns(3)
-        g2 = colg2.number_input('g^2(0) [%] =', 0.00, 100.00)
-        M = (HOM+g2/100)/(1-g2/100)
-        text = "Ms = " + str(round(M,3)) + "±" + str(round(errHOM,3))
+        colg2, colerrg2, _= st.columns(3)
+        g2 = colg2.number_input('g^2(0) [%] =', 0.00, 100.00) / 100
+        errg2 = colerrg2.number_input('\u00B1', 0.00, 100.00)
+        # Compute corrected HOM visibility
+        M_s = (hom+g2)/(1-g2)
+        ### Compute error on corrected HOM visibility
+        # Error on numerator
+        err_num = (hom+g2) * np.sqrt((errhom/hom)**2 + (errg2/g2)**2)
+        # Error on M_s
+        errM_s = M_s * np.sqrt((err_num / (hom+g2))**2 + (errg2/g2)**2)
+        text = "Ms = " + str(round(M_s,3)) + "±" + str(round(errM_s,3))
         display = '<p style="font-family:sans-serif; color:firebrick; font-size: 25px;">' + text + '</p>'
         if g2:
-            M = st.markdown(display, unsafe_allow_html=True)
+            M_s = st.markdown(display, unsafe_allow_html=True)
 
         if file != "demo":
             # To download the plot
