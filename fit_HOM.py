@@ -105,7 +105,7 @@ def main():
 
         # PLot it
         fig, ax = plt.subplots()
-        title_fig = '$V_{HOM}$' + f'= {hom * 100:.3} \u00B1 {errhom * 100:.2} %'
+        title_fig = '$V_{HOM}$' + f'= {hom * 100:.4} \u00B1 {errhom * 100:.2} %'
         ax.set_title(title_fig)
         ax.plot(time, data, '-', markersize = 3)
 
@@ -164,12 +164,12 @@ def main():
         M = (hom+g2)/(1-g2)
         # Compute error on corrected HOM value
         if g2 != 0:
-            errnum = (hom+g2) * np.sqrt( (errhom/hom)**2 + (errg2/g2)**2 )  # error on numerator
-            errM = M * np.sqrt( (errnum/(hom+g2))**2 + (errg2/g2)**2 )  # error on value
+            errnum = np.sqrt( errhom**2 + errg2**2 )  # error on numerator
+            errM = M * np.sqrt( (errnum/(hom+g2))**2 + (errg2/(1-g2))**2 )  # error on value
         else:
             errM = 0.
         # Display value
-        text = f'Ms = {M * 100:.3} \u00B1 {errM * 100:.2} %'
+        text = f'Ms = {M * 100:.4} \u00B1 {errM * 100:.2} %'
         display = '<p style="font-family:sans-serif; color:firebrick; font-size: 25px;">' + text + '</p>'
         if g2:
             M = st.markdown(display, unsafe_allow_html=True)
