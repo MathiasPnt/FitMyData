@@ -29,6 +29,7 @@ import fit_2HOM
 import fit_g2
 import fit_reflectivity
 import fit_PL
+import N_Photons_coinc
 
 choose_functionality = st.selectbox('What are we fitting today?',
                                     ('Select an option',
@@ -38,7 +39,8 @@ choose_functionality = st.selectbox('What are we fitting today?',
                                      'g2',
                                      'Reflectivity',
                                      'Photoluminescence',
-                                     'Pulse calculator'))
+                                     'Pulse calculator',
+                                     'N-photon coincidence'))
 
 if choose_functionality =='Select an option':
     image = Image.open('HOM_group.png')
@@ -54,8 +56,8 @@ if choose_functionality =='Select an option':
     local_css("style/style.css")
 
     # Load Animation. Here you can change the symbol to match the season.
-    animation_symbol1 = "🥞"
-    animation_symbol2 = "🥞"
+    animation_symbol1 = "❄️"
+    animation_symbol2 = "❄️"
 
     st.markdown(
         f"""
@@ -86,4 +88,6 @@ if choose_functionality == 'Photoluminescence':
     fit_PL.main()
 if choose_functionality == 'Pulse calculator':
     pulse_calculator.main()
+if choose_functionality == 'N-photon coincidence':
+    N_Photons_coinc.main()
 
