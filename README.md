@@ -1,5 +1,9 @@
 # FitMyData
 
+## Acess
+
+The app is available online: https://share.streamlit.io/mathiaspnt/fitmydata/app.py
+
 ## Presentation
 
 To cite this work, see [this file](./CITATION.cff).
