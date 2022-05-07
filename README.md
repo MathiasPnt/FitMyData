@@ -1,6 +1,6 @@
 # FitMyData
 
-## Acess
+## Access
 
 The app is available online: https://share.streamlit.io/mathiaspnt/fitmydata/app.py
 
