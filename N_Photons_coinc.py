@@ -16,7 +16,20 @@ import streamlit_authenticator as stauth
 from deepdiff import DeepDiff
 import copy
 
+# Password so that the values are not everywhere on the internet
+names = ['C2N']
+usernames = ['C2N']
 
+hashed_passwords = ['$2b$12$rbfjXcucXk1iXMzWYREI2euIG7FOYmGY1QfTSSNGl.77OE/Ugeouy']
+
+authenticator = stauth.authenticate(names,
+                                    usernames,
+                                    hashed_passwords,
+                                    'cookie_name',
+                                    'signature_key',
+                                    cookie_expiry_days=1)
+
+# Deadtime of the DMX
 def ff_DMX(N, t_switch, max_delay_photons):
     # ff takes into account the non-zero switching time of the DMX.
     tau_channel = max_delay_photons / (N - 1)  # t_plateau+t_twitch. Time in each channel
@@ -24,30 +37,16 @@ def ff_DMX(N, t_switch, max_delay_photons):
 
     return ff_DMX
 
-
+# N-photon coincidence rate
 def C_rate(N, t_switch, max_delay_photons, RepetitionRate, Brightness_device, T_DMX, T_chip, T_detec,
            Factor_postseclect):
-    # ff takes into account the non-zero switching time of the DMX.
-    tau_channel = max_delay_photons / (N - 1)  # t_plateau+t_twitch. Time in each channel
-    ff_DMX = (N * (tau_channel - t_switch)) / (N * tau_channel)  # T_ON / T_tot
 
-    return RepetitionRate * 1e6 / N * (
-            Brightness_device * T_DMX * ff_DMX * T_chip * T_detec) ** N / Factor_postseclect
+    # Total transmission of the setup
+    T_tot = Brightness_device * T_DMX * T_chip * T_detec
 
+    return RepetitionRate * ff_DMX(N, t_switch, max_delay_photons) * 1e6 / N * T_tot ** N / Factor_postseclect
 
 def main():
-    # Password so that the values are not everywhere on the internet
-    names = ['Quandela', 'C2N']
-    usernames = ['Quandela', 'C2N']
-    passwords = ['Quand3la', 'insitulab']
-
-    hashed_passwords = stauth.hasher(passwords).generate()
-    authenticator = stauth.authenticate(names,
-                                        usernames,
-                                        hashed_passwords,
-                                        'cookie_name',
-                                        'signature_key',
-                                        cookie_expiry_days=30)
 
     name, authentication_status = authenticator.login('Login', 'sidebar')
     if authentication_status:
@@ -67,7 +66,7 @@ def main():
                 max_delay_photons = 540  # [ns]
                 Factor_postseclect = 8
             if parameters == 'Best in the literature':
-                # Value in R&D lab @Quandela
+                # Best experimental values in the literature
                 RepetitionRate = 320  # in MHz
                 Brightness_device = 0.57
                 T_DMX = 0.70
@@ -96,16 +95,20 @@ def main():
                                     step=0.05,
                                     help="See specification of DMX6 on quandela.com")
             cola, colb = st.columns([5, 1])
+
+            # This parameter is special, we add a '?' to explain it better
             max_delay_photons = cola.number_input('Maximal delay between photons [ns]',
                                                   value=max_delay_photons,
                                                   help="Best demonstrated in Tomm, Natasha, et al., Nature Nanotechnology 16.4 (2021): 399-403.")
+            # Plot the transmission of the DMX as a function of the maximum delay between photons
+            # This takes into account the dead time of the DMX
             plot_DMX = False
             if colb.button('?'):
                 plot_DMX = True
 
+                # Def x-axis, y-axis and the meshgrid
                 N = np.arange(2, 12 + 1)
-                list_delay_photons = np.linspace(250, 2500, 200)
-
+                list_delay_photons = np.linspace(250, 10000, 200)
                 X, Y = np.meshgrid(N, list_delay_photons)
 
                 layout = Layout(
@@ -128,7 +131,7 @@ def main():
                                        yaxis_title='Max delay between photons',
                                        zaxis_title='Transmission',
                                        xaxis=dict(nticks=4, range=[1, 12], ),
-                                       yaxis=dict(nticks=4, range=[250, 2500], ),
+                                       yaxis=dict(nticks=4, range=[250, 10000], ),
                                        zaxis=dict(nticks=3, range=[0, 1], )
                                    ),
                                    font=dict(
@@ -140,6 +143,7 @@ def main():
 
                 fig1.update_yaxes(showgrid=True, gridwidth=1, gridcolor='dimgrey')
                 fig1.update_xaxes(showgrid=True, gridwidth=1, gridcolor='dimgrey')
+
             T_chip = st.number_input('Transmission of the Chip',
                                      value=T_chip,
                                      min_value=0.0,
