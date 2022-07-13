@@ -133,22 +133,22 @@ def main():
                                              step=1,
                                              help='Depends on the scheme implemented')
 
-        N = np.arange(2, 12 + 1)
+    N = np.arange(2, 12 + 1)
 
-        if plot_DMX:
-            st.write('Press R to quit this mode.')
-            st.plotly_chart(fig1)
+    if plot_DMX:
+        st.write('Press R to quit this mode.')
+        st.plotly_chart(fig1)
 
-        current_values = {'RepetitionRate': RepetitionRate,
-                          'Brightness_device': Brightness_device,
-                          'T_DMX': T_DMX,
-                          't_chip': T_chip,
-                          'T_detec': T_detec,
-                          'Factor_postseclect': Factor_postseclect
-                          }
+    current_values = {'RepetitionRate': RepetitionRate,
+                      'Brightness_device': Brightness_device,
+                      'T_DMX': T_DMX,
+                      't_chip': T_chip,
+                      'T_detec': T_detec,
+                      'Factor_postseclect': Factor_postseclect
+                      }
 
-        if 'saved_data' not in st.session_state:
-            st.session_state.saved_data = []
+    if 'saved_data' not in st.session_state:
+        st.session_state.saved_data = []
 
     with st.expander("Hold on to this set of parameters"):
         col1, col2, col3 = st.columns(3)
