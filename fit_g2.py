@@ -52,7 +52,10 @@ def main():
                     # The data has been saved using:
                     # np.savetxt(file.txt, [index, hist])
                     # we only use the hist
-                    data = np.loadtxt(file)[1]
+                    try:
+                        data = np.loadtxt(file)[1]
+                    except:
+                        data = np.loadtxt(file, skiprows=1)[:, 1]
                 if timetagger == 'HydraHarp':
                     with col2:
                         # Channel used with the HydraHarp (starts at 0).

@@ -48,7 +48,10 @@ def main():
                         timetagger = st.radio("Select correlator", ('Swabian', 'HydraHarp', 'Custom dataset'), index = 1, key = 'hyd')
                 # Get the histogram from the data file depending on which correlator was used.
                 if timetagger == 'Swabian':
-                    data = np.loadtxt(file)[1]
+                    try:
+                        data = np.loadtxt(file)[1]
+                    except:
+                        data = np.loadtxt(file, skiprows=1)[:, 1]
                 if timetagger == 'HydraHarp':
                     with col2:
                         # Channel used with the HydraHarp (starts at 0).

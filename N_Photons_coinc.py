@@ -16,18 +16,6 @@ import streamlit_authenticator as stauth
 from deepdiff import DeepDiff
 import copy
 
-# Password so that the values are not everywhere on the internet
-names = ['C2N']
-usernames = ['C2N']
-
-hashed_passwords = ['$2b$12$rbfjXcucXk1iXMzWYREI2euIG7FOYmGY1QfTSSNGl.77OE/Ugeouy']
-
-authenticator = stauth.authenticate(names,
-                                    usernames,
-                                    hashed_passwords,
-                                    'cookie_name',
-                                    'signature_key',
-                                    cookie_expiry_days=1)
 
 # Deadtime of the DMX
 def ff_DMX(N, t_switch, max_delay_photons):
@@ -48,7 +36,21 @@ def C_rate(N, t_switch, max_delay_photons, RepetitionRate, Brightness_device, T_
 
 def main():
 
+    # Password so that the values are not everywhere on the internet
+    names = ['C2N']
+    usernames = ['C2N']
+
+    hashed_passwords = ['$2b$12$rbfjXcucXk1iXMzWYREI2euIG7FOYmGY1QfTSSNGl.77OE/Ugeouy']
+
+    authenticator = stauth.authenticate(names,
+                                        usernames,
+                                        hashed_passwords,
+                                        'cookie_name',
+                                        'signature_key',
+                                        cookie_expiry_days=1)
+
     name, authentication_status = authenticator.login('Login', 'sidebar')
+
     if authentication_status:
 
         with st.sidebar:
