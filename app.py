@@ -30,6 +30,7 @@ import fit_g2
 import fit_reflectivity
 import fit_PL
 import N_Photons_coinc
+import imperfect_SPS
 
 choose_functionality = st.selectbox('What are we fitting today?',
                                     ('Select an option',
@@ -40,7 +41,8 @@ choose_functionality = st.selectbox('What are we fitting today?',
                                      'Reflectivity',
                                      'Photoluminescence',
                                      'Pulse calculator',
-                                     'N-photon coincidence'))
+                                     'N-photon coincidence',
+                                     'Phenomenological model'))
 
 if choose_functionality =='Select an option':
     image = Image.open('HOM_group.png')
@@ -90,4 +92,6 @@ if choose_functionality == 'Pulse calculator':
     pulse_calculator.main()
 if choose_functionality == 'N-photon coincidence':
     N_Photons_coinc.main()
+if choose_functionality == 'Phenomenological model':
+    imperfect_SPS.main()
 

@@ -15,6 +15,7 @@ deepdiff~=5.7.0
 
 
 git+https://github.com/anth2o/readPTU.git@fix-install-missing-cffi
+git+https://github.com/MathiasPnt/Perceval.git@imperfect_sps
 # this requirement could be changed to the original repo when this PR is merged https://github.com/QuantumPhotonicsLab/readPTU/pull/5
 
 
