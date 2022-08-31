@@ -74,25 +74,11 @@ def mzi_PhotonNumberTomography(scan_range=np.arange(0, 2 * np.pi, 0.1),
                 outcome.append(str(output_state))
 
             if output_state in output_prob:
-                output_prob[output_state] += sv_out[output_state]
+                output_prob[str(output_state)] += sv_out[output_state]
             else:
-                output_prob[output_state] = sv_out[output_state]
+                output_prob[str(output_state)] = sv_out[output_state]
 
-            norm_factor = 0
-            for output_state in output_prob:
-                if output_prob[output_state] == output_prob[output_state]:
-                    norm_factor += output_prob[output_state]
-                else:
-                    norm_factor += 0
-            if norm_factor != 0:
-                for output_state in output_prob:
-                    output_prob[output_state] = output_prob[output_state] / norm_factor
-
-            output_prob_str = {}
-            for output_state in output_prob:
-                output_prob_str[str(output_state)] = output_prob[output_state]
-
-        outcome_theta[theta] = output_prob_str
+        outcome_theta[theta] = output_prob
 
     return scan_range, outcome, outcome_theta
 
