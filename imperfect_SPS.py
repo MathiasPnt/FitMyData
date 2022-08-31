@@ -60,12 +60,10 @@ def mzi_PhotonNumberTomography(scan_range=np.arange(0, 2 * np.pi, 0.1),
     outcome_theta = {}
 
     for theta in scan_range:
-
-
         outcome = []
-
         output_prob = dict()
 
+        qpu.phase_shifters[0].set_value(0)
         qpu.phase_shifters[1].set_value(theta)
         p = pcvl.Processor({0: sps, 1: sps, }, qpu.mzi_circuit)
         all_p, sv_out = p.run(qpu.simulator_backend)
@@ -82,9 +80,14 @@ def mzi_PhotonNumberTomography(scan_range=np.arange(0, 2 * np.pi, 0.1),
 
             norm_factor = 0
             for output_state in output_prob:
-                norm_factor += output_prob[output_state]
-            for output_state in output_prob:
-                output_prob[output_state] = output_prob[output_state] / norm_factor
+                if output_prob[output_state] == output_prob[output_state]:
+                    norm_factor += output_prob[output_state]
+                else:
+                    norm_factor += 0
+            if norm_factor != 0:
+                for output_state in output_prob:
+                    output_prob[output_state] = output_prob[output_state] / norm_factor
+
             output_prob_str = {}
             for output_state in output_prob:
                 output_prob_str[str(output_state)] = output_prob[output_state]
@@ -99,7 +102,6 @@ def plot_PhotonNumberTomography(projection='2D',
                                 beta=1, eta=0.05,
                                 g2=0, M=1,
                                 multiphoton_model="distinguishable"):
-
     scan_range, outcome, outcome_theta = mzi_PhotonNumberTomography(scan_range,
                                                                     beta, eta,
                                                                     g2, M,
@@ -113,7 +115,7 @@ def plot_PhotonNumberTomography(projection='2D',
         fig = go.Figure(layout=layout)
         for measured_state in outcome:
             X = list(outcome_theta.keys())
-            Y=[outcome_theta[angle][measured_state] for angle in outcome_theta.keys()]
+            Y = [outcome_theta[angle][measured_state] for angle in outcome_theta.keys()]
             fig.add_trace(go.Scatter(
                 x=X,
                 y=Y,
@@ -244,7 +246,6 @@ def main():
     tab = st.radio('', ("Photon-number tomography", "2-photon interference"))
 
     if tab == "Photon-number tomography":
-
         st.subheader("Photon-number tomography at the output of a MZI")
 
         with st.sidebar:
@@ -270,11 +271,10 @@ def main():
         with st.sidebar:
             x_axis = st.selectbox('X-axis', ('eta', 'beta', 'g2'), key='xaxis_interference')
 
-            if x_axis=='g2':
+            if x_axis == 'g2':
                 start_stop = st.slider('Select a range of values', 0.0, 0.3, (0.0, 0.3), key='range_xaxis')
             else:
                 start_stop = st.slider('Select a range of values', 0.0, 1.0, (0.0, 1.0), key='range_xaxis')
-
 
             beta = st.slider("Brightness", min_value=0.0, max_value=1.0, value=1.0, key='beta_interfences')
             eta = st.slider("Overall transmission", min_value=0.0, max_value=1.0, value=0.05, key='eta_interfences')
@@ -312,7 +312,7 @@ def main():
         if x_axis == 'g2':
             fig.add_trace(go.Scatter(
                 x=X,
-                y=(M-X),
+                y=(M - X),
                 line=dict(width=3),
                 marker=None,
                 name='M-g2'
@@ -320,7 +320,7 @@ def main():
         if x_axis == 'g2':
             fig.add_trace(go.Scatter(
                 x=X,
-                y=M-(1+M)*X,
+                y=M - (1 + M) * X,
                 line=dict(width=3),
                 marker=None,
                 name='M-(1+M)*g2'
@@ -340,4 +340,3 @@ def main():
         fig.update_xaxes(showgrid=True, gridwidth=1, gridcolor='dimgrey')
 
         st.plotly_chart(fig)
-
