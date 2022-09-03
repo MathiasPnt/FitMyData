@@ -176,8 +176,10 @@ def outputstate_to_2outcome(output):
     if int(state[0]) > 0 and int(state[1]) > 0:
         return '|1,1>'
 
+def phase_to_balance(phase):
+    return np.sin(phase / 2) ** 2
 
-def compute(qpu, beta, eta, g2, M, multiphoton_model="distinguishable"):
+def compute(qpu, beta, eta, g2, M, phase_mzi=np.pi/2, multiphoton_model="distinguishable"):
     # Find out all the input states that must be considered depending on the characteristics of the source
     sps = pcvl.Source(brightness=beta,
                       overall_transmission=eta,
@@ -193,7 +195,7 @@ def compute(qpu, beta, eta, g2, M, multiphoton_model="distinguishable"):
                '|0,1>': 0
                }
 
-    qpu.phase_shifters[1].set_value(np.pi)
+    qpu.phase_shifters[1].set_value(0)
     p = pcvl.Processor({0: sps, 1: sps, }, qpu.mzi_circuit)
 
     all_p, sv_out = p.run(qpu.simulator_backend)
@@ -212,7 +214,7 @@ def compute(qpu, beta, eta, g2, M, multiphoton_model="distinguishable"):
                '|0,1>': 0
                }
 
-    qpu.phase_shifters[1].set_value(np.pi / 2)
+    qpu.phase_shifters[1].set_value(phase_mzi)
     p = pcvl.Processor({0: sps, 1: sps, }, qpu.mzi_circuit)
 
     all_p, sv_out = p.run(qpu.simulator_backend)
@@ -228,16 +230,39 @@ def compute(qpu, beta, eta, g2, M, multiphoton_model="distinguishable"):
     return 1 - 2 * p_corr / p_uncorr
 
 
+def probability_distribution(beta, eta, g2, M):
+
+    distinguishability = 1 - np.sqrt(M)
+    X = np.array(np.linspace(0.0, 1, 15))
+    Y = []
+
+    for eta in X:
+        p2 = min(np.poly1d([g2, -2 * (1 - g2 * beta), g2 * beta ** 2]).r)
+        p1 = beta - p2
+
+        zero = 1-(eta*p1+eta**2*p2+2*eta*(1-eta)*p2)
+        one_onebar = eta ** 2 * (1 - distinguishability) * p2
+        onetilde_onebar = eta ** 2 * distinguishability * p2
+        onetilde = eta * distinguishability * p1 + eta * (1 - eta) * distinguishability * p2
+        one = eta * (1 - distinguishability) * p1 + eta * (1 - eta) * (1 - distinguishability) * p2
+        onebar = eta * (1 - eta) * p2
+
+        Y.append([zero / one, onebar / one, one_onebar / one, onetilde / one, onetilde_onebar / one])
+
+    return X, Y
+
+
+
 def main():
-    tab = st.radio('', ("Photon-number tomography", "2-photon interference"))
+    tab = st.radio('', ("Photon-number tomography", "2-photon interference", "Probability distribution"))
 
     if tab == "Photon-number tomography":
         st.subheader("Photon-number tomography at the output of a MZI")
 
         with st.sidebar:
             projection = st.selectbox('Projection', ('2D', '3D'))
-            start_stop = st.slider('Select a range of values', 0.001, 2 * np.pi, (np.pi / 2, 3 * np.pi / 2))
-            beta = st.slider("Brightness", min_value=0.0, max_value=0.99, value=1.0)
+            start_stop = st.slider('Select a range of values', 0.0, 2 * np.pi, (np.pi / 2, 3 * np.pi / 2))
+            beta = st.slider("Brightness", min_value=0.0, max_value=1.0, value=1.0)
             eta = st.slider("Overall transmission", min_value=0.0, max_value=1.0, value=0.5)
             g2 = st.slider("g2", min_value=0.0, max_value=0.25, value=0.03)
             M = st.slider("Indistinguishability", min_value=0.0, max_value=1.0, value=1.0)
@@ -255,31 +280,36 @@ def main():
         st.subheader("2-photon interference")
 
         with st.sidebar:
-            x_axis = st.selectbox('X-axis', ('eta', 'beta', 'g2'), key='xaxis_interference')
+            x_axis = st.selectbox('X-axis', ('eta', 'beta', 'g2', 'R'), key='xaxis_interference')
 
             if x_axis == 'g2':
-                start_stop = st.slider('Select a range of values', 0.0, 0.3, (0.0, 0.3), key='range_xaxis')
+                start_stop = st.slider('Select a range of values', 0.0, 0.3, (0.0, 0.3), key='range_xaxis_g2')
+            elif x_axis == 'R':
+                start_stop = st.slider('Select a range of values', 0.0, np.pi, (np.pi/4, 3*np.pi/4), key='range_xaxis_R')
             else:
                 start_stop = st.slider('Select a range of values', 0.0, 1.0, (0.0, 1.0), key='range_xaxis')
 
             beta = st.slider("Brightness", min_value=0.0, max_value=1.0, value=1.0, key='beta_interfences')
             eta = st.slider("Overall transmission", min_value=0.0, max_value=1.0, value=0.05, key='eta_interfences')
-            g2 = st.slider("g2", min_value=0.0, max_value=1.0, value=0.03, key='g2_interfences')
+            g2 = st.slider("g2", min_value=0.0, max_value=0.25, value=0.03, key='g2_interfences')
             M = st.slider("Indistinguishability", min_value=0.0, max_value=1.0, value=1.0, key='M_interfences')
             multiphoton_model = st.selectbox('Multiphoton model', ("distinguishable", "indistinguishable"),
                                              key='model_interfences')
 
         qpunit = QPU()
 
-        X = np.linspace(start_stop[0], start_stop[1], 10)
+        X = np.linspace(start_stop[0], start_stop[1], 15)
 
         # V_HOM vs g2
         if x_axis == 'g2':
-            V = [compute(qpunit, beta, eta, g2, M, multiphoton_model=multiphoton_model) for g2 in X]
+            V = [compute(qpunit, beta, eta, g2, M, phase_mzi=np.pi/2, multiphoton_model=multiphoton_model) for g2 in X]
         if x_axis == 'eta':
-            V = [compute(qpunit, beta, eta, g2, M, multiphoton_model=multiphoton_model) for eta in X]
+            V = [compute(qpunit, beta, eta, g2, M, phase_mzi=np.pi/2, multiphoton_model=multiphoton_model) for eta in X]
         if x_axis == 'beta':
-            V = [compute(qpunit, beta, eta, g2, M, multiphoton_model=multiphoton_model) for beta in X]
+            V = [compute(qpunit, beta, eta, g2, M, phase_mzi=np.pi/2, multiphoton_model=multiphoton_model) for beta in X]
+        if x_axis == 'R':
+            V = [compute(qpunit, beta, eta, g2, M, phase_mzi=R, multiphoton_model=multiphoton_model) for R in X]
+            X = np.array([phase_to_balance(teta) for teta in X])
 
         # Plot V_HOM vs g2
 
@@ -293,7 +323,16 @@ def main():
             y=V,
             line=dict(width=3),
             marker=dict(size=10),
+            name='Simulation'
         ))
+
+        if x_axis == 'R':
+            fig.add_trace(go.Scatter(
+                x=X,
+                y=4*X*(1-X)*(1+M-(M+1)*g2)-1,
+                line=dict(width=3),
+                name='4RT*(1+M-(M+1)*g2)-1'
+            ))
 
         if x_axis == 'g2':
             fig.add_trace(go.Scatter(
@@ -326,3 +365,45 @@ def main():
         fig.update_xaxes(showgrid=True, gridwidth=1, gridcolor='dimgrey')
 
         st.plotly_chart(fig)
+
+    if tab == "Probability distribution":
+
+        with st.sidebar:
+            beta = st.slider("Brightness", min_value=0.0, max_value=1.0, value=1.0, key='beta_pro')
+            g2 = st.slider("g2", min_value=0.0, max_value=0.5, value=0.02, key='g2_pro')
+            eta = st.slider("Overall transmission", min_value=0.0, max_value=1.0, value=0.05, key='eta_pro')
+            M = st.slider("Indistinguishability", min_value=0.0, max_value=1.0, value=1.0, key='M_pro')
+
+        X, Y = probability_distribution(beta, eta, g2, M)
+
+        # Plot V_HOM vs g2
+        label = [r'$|0>$', r'$|\bar{1}>$', r'$|1,\bar{1}>$', r'$|\tilde{1}>$', r'$|\tilde{1},\bar{1}>$']
+        layout = Layout(
+            plot_bgcolor='whitesmoke'
+        )
+        fig = go.Figure(layout=layout)
+        for idx in range(5):
+            fig.add_trace(go.Scatter(
+                x=X,
+                y=[Y[i][idx] for i in range(len(Y))],
+                line=dict(width=2),
+                marker=dict(size=12),
+                name=label[idx]
+            ))
+        fig.update_layout(width=900, height=600,
+                          margin=dict(l=40, r=40, b=40, t=40),
+                          xaxis_title='eta',
+                          yaxis_title='V_HOM',
+                          font=dict(
+                              family="Courier New, monospace",
+                              size=18,
+                              color="White"
+                          )
+                          )
+        fig.update_yaxes(showgrid=True, gridwidth=1, gridcolor='dimgrey')
+        fig.update_xaxes(showgrid=True, gridwidth=1, gridcolor='dimgrey')
+
+        st.plotly_chart(fig)
+
+
+
