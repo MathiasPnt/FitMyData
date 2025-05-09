@@ -11,7 +11,6 @@ import plotly.graph_objects as go
 from plotly.graph_objs import *
 
 import perceval as pcvl
-import perceval.lib.symb as symb
 
 import streamlit as st
 
@@ -28,10 +27,10 @@ class QPU:
         self.phase_shifters = [pcvl.Parameter("phi1"), pcvl.Parameter("phi2")]
 
         (self.mzi_circuit
-         .add(0, symb.PS(self.phase_shifters[0]))
-         .add((0, 1), symb.BS())
-         .add(0, symb.PS(self.phase_shifters[1]))
-         .add((0, 1), symb.BS())
+         .add(0, pcvl.PS(self.phase_shifters[0]))
+         .add((0, 1), pcvl.BS())
+         .add(0, pcvl.PS(self.phase_shifters[1]))
+         .add((0, 1), pcvl.BS())
          )
 
         # Initial phase set to zero
@@ -42,19 +41,16 @@ class QPU:
 
 # mzi_BasicState computes the output state distribution of any input Fock state.
 def mzi_PhotonNumberTomography(scan_range=np.arange(0, 2 * np.pi, 0.1),
-                               beta=1,
                                eta=0.05,
                                g2=0,
                                M=1,
                                multiphoton_model="distinguishable"):
     qpu = QPU()
 
-    sps = pcvl.Source(brightness=beta,
-                      overall_transmission=eta,
+    sps = pcvl.Source(losses=(1-eta),
                       multiphoton_component=g2,
                       multiphoton_model=multiphoton_model,
                       indistinguishability=M,
-                      indistinguishability_model="homv"
                       )
 
     outcome_theta = {}
@@ -262,7 +258,6 @@ def main():
         with st.sidebar:
             projection = st.selectbox('Projection', ('2D', '3D'))
             start_stop = st.slider('Select a range of values', 0.0, 2 * np.pi, (np.pi / 2, 3 * np.pi / 2))
-            beta = st.slider("Brightness", min_value=0.0, max_value=1.0, value=1.0)
             eta = st.slider("Overall transmission", min_value=0.0, max_value=1.0, value=0.5)
             g2 = st.slider("g2", min_value=0.0, max_value=0.25, value=0.03)
             M = st.slider("Indistinguishability", min_value=0.0, max_value=1.0, value=1.0)
